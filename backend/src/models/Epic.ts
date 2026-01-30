@@ -19,6 +19,19 @@ export class EpicService {
     return db.get<Epic>('SELECT * FROM epics WHERE key = ?', [key]);
   }
 
+  async generateNextKey(): Promise<string> {
+    const lastEpic = await db.get<{ key: string }>('SELECT key FROM epics WHERE key LIKE "EPIC-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
+    if (!lastEpic) {
+      return 'EPIC-001';
+    }
+    const match = lastEpic.key.match(/EPIC-(\d+)/);
+    if (!match) {
+      return 'EPIC-001';
+    }
+    const nextNum = parseInt(match[1]) + 1;
+    return `EPIC-${nextNum.toString().padStart(3, '0')}`;
+  }
+
   async create(data: {
     project_id?: string;
     key: string;

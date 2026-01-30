@@ -15,8 +15,18 @@ export class StoryService {
     return db.all<Story>('SELECT * FROM stories WHERE epic_id = ? ORDER BY created_at DESC', [epicId]);
   }
 
+  async generateNextKey(): Promise<string> {
+    const last = await db.get<{ key: string }>('SELECT key FROM stories WHERE key LIKE "STORY-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
+    if (!last || !last.key) return 'STORY-001';
+    const match = last.key.match(/STORY-(\d+)/);
+    if (!match) return 'STORY-001';
+    const nextNum = parseInt(match[1]) + 1;
+    return `STORY-${nextNum.toString().padStart(3, '0')}`;
+  }
+
   async create(data: {
     epic_id: string;
+    key?: string; // Optional now
     actor: string;
     action: string;
     outcome: string;
@@ -30,10 +40,12 @@ export class StoryService {
 
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+    const key = data.key || await this.generateNextKey();
+
     const story: Story = {
       id,
       epic_id: data.epic_id,
+      key,
       actor: data.actor,
       action: data.action,
       outcome: data.outcome,
@@ -45,10 +57,10 @@ export class StoryService {
     };
 
     await db.run(`
-      INSERT INTO stories (id, epic_id, actor, action, outcome, status, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO stories (id, epic_id, key, actor, action, outcome, status, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      story.id, story.epic_id, story.actor, story.action, story.outcome, story.status,
+      story.id, story.epic_id, story.key, story.actor, story.action, story.outcome, story.status,
       story.created_at, story.created_by, story.updated_at, story.updated_by
     ]);
 

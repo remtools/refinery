@@ -37,9 +37,11 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!epic) return <div className="p-8 text-center text-gray-500">Epic not found</div>;
 
-  const handleCreateStory = async (data: any) => {
+  const handleCreateStory = async (data: any, keepOpen?: boolean) => {
     await createStory({ ...data, epic_id: epicId, created_by: 'user' });
-    setShowCreateForm(false);
+    if (!keepOpen) {
+      setShowCreateForm(false);
+    }
   };
 
   const handleUpdateStory = async (id: string, data: any) => {

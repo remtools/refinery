@@ -48,10 +48,12 @@ const ModernDashboard = () => {
     });
   }, [epics, filters]);
 
-  const handleCreateEpic = async (data: any) => {
+  const handleCreateEpic = async (data: any, keepOpen?: boolean) => {
     try {
       await createEpic(data);
-      setShowCreateForm(false);
+      if (!keepOpen) {
+        setShowCreateForm(false);
+      }
     } catch (error) {
       console.error('Failed to create epic:', error);
     }
@@ -149,6 +151,23 @@ const ModernDashboard = () => {
             } else {
               setCurrentView('epics');
               setSelectedAcId(null);
+            }
+          }}
+          onNavigate={(view, id) => {
+            if (view === 'epics') {
+              // id here is project id (assuming breadcrumb logic sends project.id)
+              // or just go to epics view if we know the project is selected
+              // The breadcrumb sends project.id
+              setSelectedProjectId(id);
+              setCurrentView('epics');
+            } else if (view === 'stories') {
+              // id is epic id
+              setSelectedEpicId(id);
+              setCurrentView('stories');
+            } else if (view === 'acceptance-criteria') {
+              // id is story id
+              setSelectedStoryId(id);
+              setCurrentView('acceptance-criteria');
             }
           }}
         />

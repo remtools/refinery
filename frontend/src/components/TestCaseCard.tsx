@@ -51,7 +51,9 @@ const TestCaseCard = ({ testCase, onEdit, onDelete }: TestCaseCardProps) => {
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Test Case</span>
+                        <span className="text-primary-600 font-mono text-xs font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                            {testCase.key || 'TC'}
+                        </span>
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityColor(testCase.priority)}`}>
                             {testCase.priority}
                         </span>
@@ -97,7 +99,6 @@ const TestCaseCard = ({ testCase, onEdit, onDelete }: TestCaseCardProps) => {
             </div>
 
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 italic">
-                <span>ID: {testCase.id.substring(0, 8)}</span>
                 <span>Updated: {new Date(testCase.updated_at).toLocaleDateString()}</span>
             </div>
         </div>

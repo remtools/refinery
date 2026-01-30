@@ -11,9 +11,10 @@ import FilterBar from './FilterBar';
 interface TestCasesViewProps {
     acceptanceCriterionId?: string;
     onBack?: () => void;
+    onNavigate?: (view: string, id: string) => void;
 }
 
-const TestCasesView = ({ acceptanceCriterionId, onBack }: TestCasesViewProps) => {
+const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesViewProps) => {
     const { state } = useAppContext();
     const { selectedProjectId } = state;
     const { stories, loading: storiesLoading } = useStories();
@@ -77,27 +78,87 @@ const TestCasesView = ({ acceptanceCriterionId, onBack }: TestCasesViewProps) =>
     return (
         <div className="container mx-auto px-6 py-8">
             <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    {onBack && (
-                        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                    )}
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            {parentAc ? 'Test Cases' : 'Test Cases'}
-                        </h1>
-                        <p className="text-gray-600 text-sm mt-1">
-                            {parentAc ? (
-                                <>For AC: <span className="font-medium italic">Given {parentAc.given.substring(0, 60)}...</span></>
-                            ) : selectedProjectId ? (
-                                "Test cases for the selected project"
-                            ) : (
-                                "Full list across all projects"
-                            )}
-                        </p>
+                <div className="flex-col">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                        {parentAc && (() => {
+                            const story = stories.find(s => s.id === parentAc.story_id);
+                            const epic = story ? epics.find(e => e.id === story.epic_id) : null;
+                            const project = epic ? state.projects.find(p => p.id === epic.project_id) : null;
+
+                            return (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {project && (
+                                        <div className="flex items-center gap-2 group relative">
+                                            <span
+                                                className="hover:text-primary-600 cursor-pointer hover:underline"
+                                                onClick={() => onNavigate?.('epics', project.id)} // Navigate to Epics list for project
+                                            >
+                                                {project.name}
+                                            </span>
+                                            <span className="text-gray-300">/</span>
+                                        </div>
+                                    )}
+                                    {epic && (
+                                        <div className="flex items-center gap-2 group relative">
+                                            <span
+                                                className="hover:text-primary-600 cursor-pointer hover:underline"
+                                                title={epic.title}
+                                                onClick={() => onNavigate?.('stories', epic.id)}
+                                            >
+                                                {epic.key || 'EPIC'}
+                                            </span>
+                                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
+                                                <div className="font-bold mb-1">{epic.title}</div>
+                                                <div className="line-clamp-2">{epic.description}</div>
+                                            </div>
+                                            <span className="text-gray-300">/</span>
+                                        </div>
+                                    )}
+                                    {story && (
+                                        <div className="flex items-center gap-2 group relative">
+                                            <span
+                                                className="hover:text-primary-600 cursor-pointer hover:underline"
+                                                title={story.action}
+                                                onClick={() => onNavigate?.('acceptance-criteria', story.id)}
+                                            >
+                                                {story.key || 'STORY'}
+                                            </span>
+                                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
+                                                <div className="font-bold mb-1">As a {story.actor}...</div>
+                                                <div className="line-clamp-2">I want to {story.action} so that {story.outcome}</div>
+                                            </div>
+                                            <span className="text-gray-300">/</span>
+                                        </div>
+                                    )}
+                                    {parentAc && (
+                                        <div className="flex items-center gap-2 group relative">
+                                            <span className="font-medium text-gray-900 border-b border-primary-500 cursor-default">
+                                                {parentAc.key || 'AC'}
+                                            </span>
+                                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
+                                                <div className="font-bold mb-1">Given {parentAc.given}...</div>
+                                                <div className="line-clamp-2">When {parentAc.when}, Then {parentAc.then}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {onBack && (
+                            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                        )}
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                Test Cases
+                            </h1>
+                        </div>
                     </div>
                 </div>
                 <button
@@ -108,22 +169,63 @@ const TestCasesView = ({ acceptanceCriterionId, onBack }: TestCasesViewProps) =>
                 </button>
             </div>
 
+            {
+                parentAc && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 animate-fade-in relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-primary-500"></div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                                <span className="text-primary-600 font-mono text-sm bg-primary-50 px-2 py-1 rounded border border-primary-100">
+                                    {parentAc.key}
+                                </span>
+                                <span>Acceptance Criterion Details</span>
+                            </h3>
+                            <div className="flex gap-2">
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${parentAc.risk === 'High' ? 'bg-orange-100 text-orange-800' :
+                                    parentAc.risk === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-blue-100 text-blue-800'
+                                    }`}>
+                                    {parentAc.risk} Risk
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">Given</span>
+                                <p className="text-gray-800 text-sm leading-relaxed">{parentAc.given}</p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">When</span>
+                                <p className="text-gray-800 text-sm leading-relaxed">{parentAc.when}</p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">Then</span>
+                                <p className="text-gray-800 text-sm leading-relaxed">{parentAc.then}</p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             <FilterBar
                 placeholder="Search test cases..."
                 statusOptions={['Not Run', 'Pass', 'Fail', 'Blocked']}
                 onFilterChange={setFilters}
             />
 
-            {(showForm || editingItem) && (
-                <div className="mb-8 animate-fade-in">
-                    <TestCaseForm
-                        acceptanceCriterionId={acceptanceCriterionId}
-                        initialData={editingItem}
-                        onCancel={() => { setShowForm(false); setEditingItem(null); }}
-                        onSubmit={editingItem ? handleUpdate : handleCreate}
-                    />
-                </div>
-            )}
+            {
+                (showForm || editingItem) && (
+                    <div className="mb-8 animate-fade-in">
+                        <TestCaseForm
+                            acceptanceCriterionId={acceptanceCriterionId}
+                            initialData={editingItem}
+                            onCancel={() => { setShowForm(false); setEditingItem(null); }}
+                            onSubmit={editingItem ? handleUpdate : handleCreate}
+                        />
+                    </div>
+                )
+            }
 
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
                 {filteredTestCases.length === 0 ? (
@@ -147,7 +249,7 @@ const TestCasesView = ({ acceptanceCriterionId, onBack }: TestCasesViewProps) =>
                     ))
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

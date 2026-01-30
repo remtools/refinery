@@ -11,7 +11,7 @@ interface FormField {
 }
 
 interface ModernFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any, keepOpen?: boolean) => void;
   initialData?: any;
   title: string;
   submitButtonText: string;
@@ -24,7 +24,7 @@ interface ModernFormProps {
 const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, fields, className = '', hideCancel = false }: ModernFormProps) => {
   // Default fields for Epics (backward compatibility)
   const defaultFields: FormField[] = [
-    { name: 'key', label: 'Epic Key', type: 'text', required: true, placeholder: 'e.g., EPIC-001', disabled: !!initialData },
+    // Key is auto-generated
     { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'Enter epic title' },
     { name: 'description', label: 'Description', type: 'textarea', required: true, placeholder: 'Provide a detailed description...' }
   ];
@@ -44,6 +44,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
 
   const [formData, setFormData] = useState(getInitialState());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [keepOpen, setKeepOpen] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -60,10 +61,33 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      onSubmit(formData, keepOpen);
+      if (keepOpen) {
+        // Reset form but keep 'created_by' and other hidden fields if needed
+        // For now, simpler to just reset user-editable fields
+        const resetState: any = {
+          created_by: 'user',
+          updated_by: 'user',
+        };
+        activeFields.forEach(field => {
+          // Keep the key if it's disabled (editing mode), but wait, create another implies new item.
+          // If we are editing, 'keepOpen' doesn't make much sense or should act differently.
+          // Assuming this is mostly for creation.
+          // If existing data was passed (edit mode), we probably shouldn't allow 'create another' easily unless intended.
+          // But let's support it for creation flow.
+          resetState[field.name] = ''; // Clear all fields
+        });
+        setFormData(resetState);
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -75,7 +99,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
     }
   };
 
-  const renderField = (field: FormField) => {
+  const renderField = (field: FormField, index: number) => {
     const commonClass = `w-full px-4 py-2.5 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${errors[field.name] ? 'border-error-500 bg-error-50' : 'border-gray-300 bg-white hover:border-primary-400'
       } ${field.disabled ? 'bg-gray-50 cursor-not-allowed' : ''}`;
 
@@ -93,10 +117,11 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
               name={field.name}
               value={formData[field.name]}
               onChange={handleChange}
-              rows={5}
+              rows={3}
               className={commonClass + ' resize-none'}
               placeholder={field.placeholder}
               disabled={field.disabled}
+              autoFocus={index === 0}
             />
           ) : field.type === 'select' ? (
             <select
@@ -106,6 +131,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
               onChange={handleChange}
               className={commonClass}
               disabled={field.disabled}
+              autoFocus={index === 0}
             >
               <option value="">Select {field.label}</option>
               {field.options?.map(opt => {
@@ -124,6 +150,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
               className={commonClass}
               placeholder={field.placeholder}
               disabled={field.disabled}
+              autoFocus={index === 0}
             />
           )}
 
@@ -146,7 +173,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
   };
 
   return (
-    <div className={`bg-white rounded-xl shadow-card border border-gray-200 animate-fade-in ${className}`}>
+    <div className={`bg-white rounded-xl shadow-card border border-gray-200 animate-fade-in ${className}`} onKeyDown={handleKeyDown}>
       <div className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
@@ -162,25 +189,48 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
 
       <form onSubmit={handleSubmit} className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {activeFields.map(renderField)}
+          {activeFields.map((field, index) => renderField(field, index))}
         </div>
 
-        <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
-          {onCancel && !hideCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-              Cancel
-            </button>
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+
+          {!initialData && (
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={keepOpen}
+                  onChange={(e) => setKeepOpen(e.target.checked)}
+                  className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-primary-500 checked:bg-primary-500 hover:border-primary-400"
+                />
+                <svg className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors select-none">Create another</span>
+            </label>
           )}
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-gradient-primary text-white rounded-lg hover:shadow-button-hover transition-all duration-200 font-medium shadow-button"
-          >
-            {submitButtonText}
-          </button>
+          {initialData && <div></div>} {/* Spacer if not creating */}
+
+          <div className="flex gap-3">
+            {onCancel && !hideCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                title="Esc"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-gradient-primary text-white rounded-lg hover:shadow-button-hover transition-all duration-200 font-medium shadow-button flex items-center gap-2"
+              title="Ctrl + Enter"
+            >
+              {submitButtonText}
+            </button>
+          </div>
         </div>
       </form>
     </div>

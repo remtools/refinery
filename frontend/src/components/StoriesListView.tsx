@@ -79,7 +79,7 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                         </button>
                     </div>
                     <StoryForm
-                        onSubmit={async (data) => {
+                        onSubmit={async (data, keepOpen) => {
                             if (editingStory) {
                                 const updateData = {
                                     epic_id: data.epic_id,
@@ -93,7 +93,9 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                                 setEditingStory(null);
                             } else {
                                 await createStory(data);
-                                setShowCreateForm(false);
+                                if (!keepOpen) {
+                                    setShowCreateForm(false);
+                                }
                             }
                         }}
                         initialData={editingStory}

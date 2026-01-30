@@ -36,6 +36,9 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
       <div className="flex justify-between items-start mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
+            <span className="text-primary-600 font-mono text-xs font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+              {story.key || 'STORY'}
+            </span>
             <span className="text-sm text-blue-600">{getEpicTitle()}</span>
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(story.status)}`}>
               {story.status}

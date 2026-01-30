@@ -25,6 +25,7 @@ export interface Epic {
 export interface Story {
   id: string;
   epic_id: string;
+  key?: string;
   actor: string;
   action: string;
   outcome: string;
@@ -38,6 +39,7 @@ export interface Story {
 export interface AcceptanceCriterion {
   id: string;
   story_id: string;
+  key?: string;
   given: string;
   when: string;
   then: string;
@@ -54,6 +56,7 @@ export interface AcceptanceCriterion {
 export interface TestCase {
   id: string;
   acceptance_criterion_id: string;
+  key?: string;
   preconditions: string;
   steps: string;
   expected_result: string;

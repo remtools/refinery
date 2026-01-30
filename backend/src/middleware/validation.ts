@@ -17,7 +17,7 @@ export const updateProjectSchema = Joi.object({
 
 export const epicSchema = Joi.object({
   project_id: Joi.string().uuid().allow('').optional(),
-  key: Joi.string().required().pattern(/^[A-Z0-9-]+$/),
+  key: Joi.string().pattern(/^[A-Z0-9-]+$/).optional().allow(''),
   title: Joi.string().required().min(1).max(200),
   description: Joi.string().required().min(1),
   status: Joi.string().valid('Draft', 'Approved', 'Locked').default('Draft'),

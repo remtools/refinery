@@ -47,13 +47,21 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/epics
 router.post('/', validate(epicSchema), async (req, res, next) => {
   try {
-    // Check for duplicate key
-    const existing = await epicService.getByKey(req.body.key);
-    if (existing) {
-      return res.status(409).json({ error: 'Epic with this key already exists' });
+    let epicData = req.body;
+
+    // Use provided key or auto-generate
+    if (!epicData.key) {
+      const nextKey = await epicService.generateNextKey();
+      epicData = { ...epicData, key: nextKey };
+    } else {
+      // Check for duplicate key only if manually provided
+      const existing = await epicService.getByKey(epicData.key);
+      if (existing) {
+        return res.status(409).json({ error: 'Epic with this key already exists' });
+      }
     }
 
-    const epic = await epicService.create(req.body);
+    const epic = await epicService.create(epicData);
     return res.status(201).json(epic);
   } catch (error) {
     return next(error);

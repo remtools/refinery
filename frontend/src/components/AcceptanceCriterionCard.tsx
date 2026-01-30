@@ -48,6 +48,9 @@ const AcceptanceCriterionCard = ({
       <div className="flex justify-between items-start mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
+            <span className="text-primary-600 font-mono text-xs font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+              {acceptanceCriterion.key || 'AC'}
+            </span>
             {/* Story title removed to reduce redundancy */}
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(acceptanceCriterion.status)}`}>
               {acceptanceCriterion.status}

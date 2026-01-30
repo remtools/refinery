@@ -11,12 +11,18 @@ export class TestCaseService {
     return db.get<TestCase>('SELECT * FROM test_cases WHERE id = ?', [id]);
   }
 
-  async getByAcceptanceCriterionId(acId: string): Promise<TestCase[]> {
-    return db.all<TestCase>('SELECT * FROM test_cases WHERE acceptance_criterion_id = ? ORDER BY created_at DESC', [acId]);
+  async generateNextKey(): Promise<string> {
+    const last = await db.get<{ key: string }>('SELECT key FROM test_cases WHERE key LIKE "TC-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
+    if (!last || !last.key) return 'TC-001';
+    const match = last.key.match(/TC-(\d+)/);
+    if (!match) return 'TC-001';
+    const nextNum = parseInt(match[1]) + 1;
+    return `TC-${nextNum.toString().padStart(3, '0')}`;
   }
 
   async create(data: {
     acceptance_criterion_id: string;
+    key?: string; // Optional
     preconditions: string;
     steps: string;
     expected_result: string;
@@ -31,10 +37,12 @@ export class TestCaseService {
 
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+    const key = data.key || await this.generateNextKey();
+
     const testCase: TestCase = {
       id,
       acceptance_criterion_id: data.acceptance_criterion_id,
+      key,
       preconditions: data.preconditions,
       steps: data.steps,
       expected_result: data.expected_result,
@@ -47,10 +55,10 @@ export class TestCaseService {
     };
 
     await db.run(`
-      INSERT INTO test_cases (id, acceptance_criterion_id, preconditions, steps, expected_result, priority, test_status, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO test_cases (id, acceptance_criterion_id, key, preconditions, steps, expected_result, priority, test_status, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      testCase.id, testCase.acceptance_criterion_id, testCase.preconditions, testCase.steps,
+      testCase.id, testCase.acceptance_criterion_id, testCase.key, testCase.preconditions, testCase.steps,
       testCase.expected_result, testCase.priority, testCase.test_status,
       testCase.created_at, testCase.created_by, testCase.updated_at, testCase.updated_by
     ]);
