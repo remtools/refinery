@@ -32,6 +32,14 @@ export const projectService = {
   async deleteProject(id: string): Promise<void> {
     return api.deleteProject(id);
   },
+
+  async importProject(data: any): Promise<Project> {
+    return api.importProject(data);
+  },
+
+  async exportProject(id: string): Promise<any> {
+    return api.exportProject(id);
+  },
 };
 
 // Epic services

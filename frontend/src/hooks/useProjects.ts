@@ -7,6 +7,8 @@ export const useProjects = () => {
         createProject,
         updateProject,
         deleteProject,
+        importProject,
+        exportProject,
     } = useAppContext();
 
     return {
@@ -17,5 +19,7 @@ export const useProjects = () => {
         createProject,
         updateProject,
         deleteProject,
+        importProject,
+        exportProject,
     };
 };

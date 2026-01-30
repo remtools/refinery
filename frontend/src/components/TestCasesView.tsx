@@ -3,6 +3,7 @@ import { useTestCases } from '../hooks/useTestCases';
 import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
+import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
 import TestCaseCard from './TestCaseCard';
 import TestCaseForm from './TestCaseForm';
@@ -20,14 +21,8 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
     const { stories, loading: storiesLoading } = useStories();
     const { epics, loading: epicsLoading } = useEpics();
     const { acceptanceCriteria, loading: acLoading } = useAcceptanceCriteria();
-    const {
-        testCases,
-        loading: tcLoading,
-        error: tcError,
-        createTestCase,
-        updateTestCase,
-        deleteTestCase
-    } = useTestCases();
+    const { testCases, loading: tcLoading, error: tcError, createTestCase, updateTestCase, deleteTestCase } = useTestCases();
+    const { actors } = useActors(selectedProjectId || undefined);
 
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
@@ -149,7 +144,7 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                                                 {story.key || 'STORY'}
                                             </span>
                                             <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
-                                                <div className="font-bold mb-1">As a {story.actor}...</div>
+                                                <div className="font-bold mb-1">As a {actors.find(a => a.id === story.actor_id)?.name || 'Unknown'}...</div>
                                                 <div className="line-clamp-2">I want to {story.action} so that {story.outcome}</div>
                                             </div>
                                             <span className="text-gray-300">/</span>

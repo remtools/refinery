@@ -26,7 +26,7 @@ export interface Story {
   id: string;
   epic_id: string;
   key?: string;
-  actor: string;
+  actor_id: string;
   action: string;
   outcome: string;
   status: 'Draft' | 'Approved' | 'Locked';

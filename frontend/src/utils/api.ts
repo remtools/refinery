@@ -65,6 +65,17 @@ export const api = {
     });
   },
 
+  async importProject(data: any) {
+    return this.request('/projects/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async exportProject(id: string) {
+    return this.request(`/projects/${id}/export`);
+  },
+
   // Epics
   async getEpics(projectId?: string) {
     const endpoint = projectId ? `/epics?project_id=${projectId}` : '/epics';

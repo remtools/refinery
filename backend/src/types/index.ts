@@ -26,7 +26,7 @@ export interface Story {
   id: string;
   epic_id: string;
   key?: string;
-  actor: string;
+  actor_id: string;
   action: string;
   outcome: string;
   status: 'Draft' | 'Approved' | 'Locked';
@@ -77,7 +77,7 @@ export interface CreateEpicRequest {
 
 export interface CreateStoryRequest {
   epic_id: string;
-  actor: string;
+  actor_id: string;
   action: string;
   outcome: string;
   created_by: string;
@@ -98,5 +98,25 @@ export interface CreateTestCaseRequest {
   steps: string;
   expected_result: string;
   priority: 'Low' | 'Medium' | 'High';
+  created_by: string;
+}
+
+export interface Actor {
+  id: string;
+  project_id: string;
+  name: string;
+  role?: string;
+  description?: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+}
+
+export interface CreateActorRequest {
+  project_id: string;
+  name: string;
+  role?: string;
+  description?: string;
   created_by: string;
 }

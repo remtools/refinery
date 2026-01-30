@@ -29,11 +29,36 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+// POST /api/projects/import
+router.post('/import', async (req, res, next) => {
+    try {
+        const project = await projectService.import(req.body);
+        return res.status(201).json(project);
+    } catch (error) {
+        return next(error);
+    }
+});
+
 // POST /api/projects
 router.post('/', validate(projectSchema), async (req, res, next) => {
     try {
         const project = await projectService.create(req.body);
         return res.status(201).json(project);
+    } catch (error) {
+        return next(error);
+    }
+});
+
+// GET /api/projects/:id/export
+router.get('/:id/export', async (req, res, next) => {
+    try {
+        const data = await projectService.export(req.params.id);
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="project-${data.name}-${new Date().toISOString()}.json"`);
+
+        return res.json(data);
     } catch (error) {
         return next(error);
     }

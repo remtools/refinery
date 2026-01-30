@@ -5,9 +5,10 @@ interface ProjectCardProps {
     onEdit: () => void;
     onDelete: () => void;
     onViewEpics: () => void;
+    onExport: () => void;
 }
 
-const ProjectCard = ({ project, onEdit, onDelete, onViewEpics }: ProjectCardProps) => {
+const ProjectCard = ({ project, onEdit, onDelete, onViewEpics, onExport }: ProjectCardProps) => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Active':
@@ -36,6 +37,15 @@ const ProjectCard = ({ project, onEdit, onDelete, onViewEpics }: ProjectCardProp
                     </h3>
                 </div>
                 <div className="flex space-x-2">
+                    <button
+                        onClick={onExport}
+                        className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                        title="Export project"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </button>
                     <button
                         onClick={onEdit}
                         className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200"

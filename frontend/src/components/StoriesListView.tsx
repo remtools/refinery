@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
+import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
 import StoryCard from './StoryCard';
 import StoryForm from './StoryForm';
@@ -15,6 +16,7 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
     const { selectedProjectId } = state;
     const { stories, loading: storiesLoading, error: storiesError, createStory, updateStory, deleteStory } = useStories();
     const { epics, loading: epicsLoading } = useEpics();
+    const { actors } = useActors(selectedProjectId || undefined);
 
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingStory, setEditingStory] = useState<any>(null);
@@ -30,13 +32,14 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
 
         // Then apply search filters
         return list.filter(s => {
-            const matchesSearch = s.actor.toLowerCase().includes(filters.search.toLowerCase()) ||
+            const actorName = actors.find(a => a.id === s.actor_id)?.name || '';
+            const matchesSearch = actorName.toLowerCase().includes(filters.search.toLowerCase()) ||
                 s.action.toLowerCase().includes(filters.search.toLowerCase()) ||
                 s.outcome.toLowerCase().includes(filters.search.toLowerCase());
             const matchesStatus = !filters.status || s.status === filters.status;
             return matchesSearch && matchesStatus;
         });
-    }, [stories, epics, selectedProjectId, filters]);
+    }, [stories, epics, selectedProjectId, filters, actors]);
 
     if (storiesLoading || epicsLoading) return <div className="p-8 text-center text-gray-500">Loading stories...</div>;
 
@@ -107,7 +110,7 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                             if (editingStory) {
                                 const updateData = {
                                     epic_id: data.epic_id,
-                                    actor: data.actor,
+                                    actor_id: data.actor_id,
                                     action: data.action,
                                     outcome: data.outcome,
                                     status: data.status,

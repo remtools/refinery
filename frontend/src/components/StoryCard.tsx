@@ -1,5 +1,6 @@
 import { Story } from '../types';
 import { useEpics } from '../hooks/useEpics';
+import { useActors } from '../hooks/useActors';
 
 interface StoryCardProps {
   story: Story;
@@ -10,6 +11,14 @@ interface StoryCardProps {
 
 const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryCardProps) => {
   const { epics } = useEpics();
+  const epic = epics.find(e => e.id === story.epic_id);
+  const { actors } = useActors(epic?.project_id);
+
+  const getActorName = () => {
+    if (!story.actor_id) return 'Unknown Actor';
+    const actor = actors.find(a => a.id === story.actor_id);
+    return actor ? actor.name : 'Unknown Actor';
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -25,11 +34,11 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
   };
 
   const getEpicTitle = () => {
-    const epic = epics.find(e => e.id === story.epic_id);
     return epic?.title || 'Unknown Epic';
   };
 
   const isLocked = story.status === 'Locked';
+  const actorName = getActorName();
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
@@ -45,7 +54,7 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
             </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            As a {story.actor}, I want to {story.action.toLowerCase()}, so that {story.outcome.toLowerCase()}
+            As a {actorName}, I want to {story.action.toLowerCase()}, so that {story.outcome.toLowerCase()}
           </h3>
         </div>
         <div className="flex space-x-2">
@@ -81,7 +90,7 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-6">
         <div>
           <span className="font-medium text-gray-700">Actor:</span>
-          <span className="ml-2 text-gray-600">{story.actor}</span>
+          <span className="ml-2 text-gray-600">{actorName}</span>
         </div>
         <div>
           <span className="font-medium text-gray-700">Action:</span>

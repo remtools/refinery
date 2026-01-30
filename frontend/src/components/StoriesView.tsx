@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
+import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
 import StoryCard from './StoryCard';
 import StoryForm from './StoryForm';
@@ -15,27 +16,27 @@ interface StoriesViewProps {
 const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewProps) => {
   const { dispatch } = useAppContext();
   const { epics } = useEpics();
+  const epic = useMemo(() => epics.find(e => e.id === epicId), [epics, epicId]);
+  const { actors } = useActors(epic?.project_id);
   const { stories, loading, error, createStory, updateStory, deleteStory } = useStories();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [filters, setFilters] = useState({ search: '', status: '' });
 
-  const epic = useMemo(() => epics.find(e => e.id === epicId), [epics, epicId]);
-
   const filteredStories = useMemo(() => {
     return stories
       .filter(s => s.epic_id === epicId)
       .filter(s => {
+        const actorName = actors.find(a => a.id === s.actor_id)?.name || '';
         const matchesSearch =
-          s.actor.toLowerCase().includes(filters.search.toLowerCase()) ||
+          actorName.toLowerCase().includes(filters.search.toLowerCase()) ||
           s.action.toLowerCase().includes(filters.search.toLowerCase()) ||
           s.outcome.toLowerCase().includes(filters.search.toLowerCase());
         const matchesStatus = !filters.status || s.status === filters.status;
         return matchesSearch && matchesStatus;
       });
-  }, [stories, epicId, filters]);
+  }, [stories, epicId, filters, actors]);
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading stories...</div>;
   if (loading) return <div className="p-8 text-center text-gray-500">Loading stories...</div>;
   if (!epic) return <div className="p-8 text-center text-gray-500">Epic not found</div>;
 
@@ -53,7 +54,7 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
   const handleUpdateStory = async (id: string, data: any) => {
     const updateData = {
       epic_id: data.epic_id,
-      actor: data.actor,
+      actor_id: data.actor_id,
       action: data.action,
       outcome: data.outcome,
       status: data.status,

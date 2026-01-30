@@ -27,7 +27,7 @@ export class StoryService {
   async create(data: {
     epic_id: string;
     key?: string; // Optional now
-    actor: string;
+    actor_id: string;
     action: string;
     outcome: string;
     created_by: string;
@@ -38,6 +38,12 @@ export class StoryService {
       throw new Error('Referenced epic does not exist');
     }
 
+    // Fetch actor name for backward compatibility
+    const actor = await db.get<{ name: string }>('SELECT name FROM actors WHERE id = ?', [data.actor_id]);
+    if (!actor) {
+      throw new Error('Referenced actor does not exist');
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
     const key = data.key || await this.generateNextKey();
@@ -46,7 +52,7 @@ export class StoryService {
       id,
       epic_id: data.epic_id,
       key,
-      actor: data.actor,
+      actor_id: data.actor_id,
       action: data.action,
       outcome: data.outcome,
       status: 'Draft',
@@ -57,10 +63,10 @@ export class StoryService {
     };
 
     await db.run(`
-      INSERT INTO stories (id, epic_id, key, actor, action, outcome, status, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO stories (id, epic_id, key, actor, actor_id, action, outcome, status, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      story.id, story.epic_id, story.key, story.actor, story.action, story.outcome, story.status,
+      story.id, story.epic_id, story.key, actor.name, story.actor_id, story.action, story.outcome, story.status,
       story.created_at, story.created_by, story.updated_at, story.updated_by
     ]);
 
@@ -68,7 +74,7 @@ export class StoryService {
   }
 
   async update(id: string, data: {
-    actor?: string;
+    actor_id?: string;
     action?: string;
     outcome?: string;
     status?: 'Draft' | 'Approved' | 'Locked';
@@ -88,9 +94,16 @@ export class StoryService {
     const updates: string[] = [];
     const values: any[] = [];
 
-    if (data.actor !== undefined) {
+    if (data.actor_id !== undefined) {
+      // Fetch actor name for backward compatibility
+      const actor = await db.get<{ name: string }>('SELECT name FROM actors WHERE id = ?', [data.actor_id]);
+      if (!actor) {
+        throw new Error('Referenced actor does not exist');
+      }
+      updates.push('actor_id = ?');
       updates.push('actor = ?');
-      values.push(data.actor);
+      values.push(data.actor_id);
+      values.push(actor.name);
     }
     if (data.action !== undefined) {
       updates.push('action = ?');

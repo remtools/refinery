@@ -52,7 +52,8 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS stories (
       id TEXT PRIMARY KEY,
       epic_id TEXT NOT NULL,
-      actor TEXT NOT NULL,
+      actor TEXT,
+      actor_id TEXT,
       action TEXT NOT NULL,
       outcome TEXT NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
@@ -60,9 +61,33 @@ const createTables = async () => {
       created_by TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       updated_by TEXT NOT NULL,
-      FOREIGN KEY (epic_id) REFERENCES epics(id) ON DELETE CASCADE
+      FOREIGN KEY (epic_id) REFERENCES epics(id) ON DELETE CASCADE,
+      FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE SET NULL
     )
   `);
+
+  try {
+    const columns = await db.all<any>('PRAGMA table_info(stories)');
+    const hasActorId = columns.some((col: any) => col.name === 'actor_id');
+    if (!hasActorId) {
+      console.log('Adding actor_id to stories...');
+      await db.run('ALTER TABLE stories ADD COLUMN actor_id TEXT REFERENCES actors(id) ON DELETE SET NULL');
+
+      console.log('Migrating story actors...');
+      await db.run(`
+              UPDATE stories 
+              SET actor_id = (
+                  SELECT actors.id 
+                  FROM actors 
+                  JOIN epics ON epics.project_id = actors.project_id 
+                  WHERE epics.id = stories.epic_id AND actors.name = stories.actor
+              )
+              WHERE actor_id IS NULL AND actor IS NOT NULL
+          `);
+    }
+  } catch (error) {
+    console.error('Migration error for stories:', error);
+  }
 
   // Acceptance Criteria table
   await db.run(`

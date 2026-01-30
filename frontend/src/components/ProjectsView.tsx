@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useProjects } from '../hooks/useProjects';
 import { useAppContext } from '../context/AppContext';
 import ProjectCard from './ProjectCard';
@@ -61,11 +61,12 @@ const ProjectEditTabs = ({ project, onUpdate }: { project: any, onUpdate: (data:
 };
 
 const ProjectsView = ({ onViewEpics }: ProjectsViewProps) => {
-    const { projects, loading, error, createProject, updateProject, deleteProject } = useProjects();
+    const { projects, loading, error, createProject, updateProject, deleteProject, importProject, exportProject } = useProjects();
     const { dispatch } = useAppContext();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingProject, setEditingProject] = useState<any>(null);
     const [filters, setFilters] = useState({ search: '', status: '' });
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const filteredProjects = useMemo(() => {
         return projects.filter(p => {
@@ -98,8 +99,54 @@ const ProjectsView = ({ onViewEpics }: ProjectsViewProps) => {
         setEditingProject(null);
     };
 
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target?.result as string);
+                await importProject(data);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            } catch (err) {
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                console.error("Import failed:", err);
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    const handleExport = async (project: any) => {
+        try {
+            const data = await exportProject(project.id);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `project-${project.name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Export failed:", err);
+        }
+    };
+
     return (
         <div className="container mx-auto px-6 py-8">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="application/json"
+                className="hidden"
+            />
             {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r shadow-sm animate-fade-in flex justify-between items-start">
                     <div className="flex items-start">
@@ -126,15 +173,26 @@ const ProjectsView = ({ onViewEpics }: ProjectsViewProps) => {
                     <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
                     <p className="text-gray-600 mt-1">Select a project to manage its requirements hierarchy</p>
                 </div>
-                <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="px-6 py-2.5 bg-gradient-primary text-white rounded-lg shadow-button hover:shadow-button-hover transition-all duration-200 font-medium flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    New Project
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleImportClick}
+                        className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium shadow-sm flex items-center gap-2"
+                    >
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Import Project
+                    </button>
+                    <button
+                        onClick={() => setShowCreateForm(true)}
+                        className="px-6 py-2.5 bg-gradient-primary text-white rounded-lg shadow-button hover:shadow-button-hover transition-all duration-200 font-medium flex items-center gap-2"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Project
+                    </button>
+                </div>
             </div>
 
             <FilterBar
@@ -221,6 +279,7 @@ const ProjectsView = ({ onViewEpics }: ProjectsViewProps) => {
                                 }
                             }}
                             onViewEpics={() => onViewEpics(project.id)}
+                            onExport={() => handleExport(project)}
                         />
                     ))
                 )}

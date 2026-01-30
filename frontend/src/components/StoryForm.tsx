@@ -32,11 +32,11 @@ const StoryForm = ({ onSubmit, initialData, epicId, onCancel }: StoryFormProps) 
       required: true
     },
     {
-      name: 'actor',
+      name: 'actor_id',
       label: 'Actor (As a...)',
       type: 'select' as const,
       required: true,
-      options: actors.map(a => ({ value: a.name, label: a.name })), // Value is name string as per Story schema
+      options: actors.map(a => ({ value: a.id, label: a.name })),
       placeholder: 'Select an actor...'
     },
     { name: 'action', label: 'Action (I want to...)', type: 'text' as const, required: true, placeholder: 'e.g. log in' },

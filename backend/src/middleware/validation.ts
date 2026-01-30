@@ -36,7 +36,7 @@ export const updateEpicSchema = Joi.object({
 
 export const storySchema = Joi.object({
   epic_id: Joi.string().uuid().required(),
-  actor: Joi.string().required().min(1).max(100),
+  actor_id: Joi.string().uuid().required(),
   action: Joi.string().required().min(1),
   outcome: Joi.string().required().min(1),
   status: Joi.string().valid('Draft', 'Approved', 'Locked').default('Draft'),
@@ -46,7 +46,7 @@ export const storySchema = Joi.object({
 
 export const updateStorySchema = Joi.object({
   epic_id: Joi.string().uuid(),
-  actor: Joi.string().min(1).max(100),
+  actor_id: Joi.string().uuid(),
   action: Joi.string().min(1),
   outcome: Joi.string().min(1),
   status: Joi.string().valid('Draft', 'Approved', 'Locked'),

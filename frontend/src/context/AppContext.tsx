@@ -19,6 +19,8 @@ interface AppContextType {
   createProject: (data: any) => Promise<void>;
   updateProject: (id: string, data: any) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
+  importProject: (data: any) => Promise<void>;
+  exportProject: (id: string) => Promise<any>;
   // Epic actions
   fetchEpics: (projectId?: string) => Promise<void>;
   createEpic: (data: any) => Promise<void>;
@@ -91,6 +93,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await projectService.deleteProject(id);
       dispatch({ type: 'DELETE_PROJECT', id });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const importProject = async (data: any) => {
+    try {
+      const project = await projectService.importProject(data);
+      dispatch({ type: 'ADD_PROJECT', project });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const exportProject = async (id: string) => {
+    try {
+      return await projectService.exportProject(id);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
@@ -315,6 +336,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createProject,
         updateProject,
         deleteProject,
+        importProject,
+        exportProject,
         fetchEpics,
         createEpic,
         updateEpic,

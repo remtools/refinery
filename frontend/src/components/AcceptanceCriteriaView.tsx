@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
+import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
 import AcceptanceCriterionCard from './AcceptanceCriterionCard';
 import AcceptanceCriterionForm from './AcceptanceCriterionForm';
@@ -26,6 +27,7 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
         updateAcceptanceCriterion,
         deleteAcceptanceCriterion
     } = useAcceptanceCriteria(storyId);
+    const { actors } = useActors(selectedProjectId || undefined);
 
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
@@ -110,7 +112,7 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                         </h1>
                         <p className="text-gray-600 text-sm mt-1">
                             {parentStory ? (
-                                <>For Story: <span className="font-medium">As a {parentStory.actor}, I want to {parentStory.action} so that {parentStory.outcome}</span></>
+                                <>For Story: <span className="font-medium">As a {actors.find(a => a.id === parentStory.actor_id)?.name || 'Unknown'}, I want to {parentStory.action} so that {parentStory.outcome}</span></>
                             ) : selectedProjectId ? (
                                 "Criteria for the selected project"
                             ) : (

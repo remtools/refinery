@@ -1,4 +1,6 @@
 import { useStories } from '../hooks/useStories';
+import { useActors } from '../hooks/useActors';
+import { useAppContext } from '../context/AppContext';
 import ModernForm from './ModernForm';
 
 interface AcceptanceCriterionFormProps {
@@ -9,14 +11,21 @@ interface AcceptanceCriterionFormProps {
 }
 
 const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: AcceptanceCriterionFormProps) => {
+  const { state } = useAppContext();
   const { stories } = useStories();
+  const { actors } = useActors(state.selectedProjectId || undefined);
+
+  const getActorName = (actorId: string) => {
+    const actor = actors.find(a => a.id === actorId);
+    return actor ? actor.name : 'Unknown Actor';
+  };
 
   const fields = [
     {
       name: 'story_id',
       label: 'Parent Story',
       type: 'select' as const,
-      options: stories.map(s => ({ value: s.id, label: `${s.key || 'STORY'} - As a ${s.actor}, I want to ${s.action}` })),
+      options: stories.map(s => ({ value: s.id, label: `${s.key || 'STORY'} - As a ${getActorName(s.actor_id)}, I want to ${s.action}` })),
       required: true
     },
     { name: 'given', label: 'Given', type: 'textarea' as const, required: true, placeholder: 'Initial context' },
