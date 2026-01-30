@@ -16,7 +16,7 @@ const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: A
       name: 'story_id',
       label: 'Parent Story',
       type: 'select' as const,
-      options: stories.map(s => ({ value: s.id, label: `As a ${s.actor}, I want to ${s.action}` })),
+      options: stories.map(s => ({ value: s.id, label: `${s.key || 'STORY'} - As a ${s.actor}, I want to ${s.action}` })),
       required: true
     },
     { name: 'given', label: 'Given', type: 'textarea' as const, required: true, placeholder: 'Initial context' },

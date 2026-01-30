@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext';
 import ModernForm from './ModernForm';
 
 interface StoryFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any, keepOpen?: boolean) => void;
   initialData?: any;
   epicId?: string;
   onCancel?: () => void;
@@ -28,7 +28,7 @@ const StoryForm = ({ onSubmit, initialData, epicId, onCancel }: StoryFormProps) 
       name: 'epic_id',
       label: 'Parent Epic',
       type: 'select' as const,
-      options: epics.map(e => ({ value: e.id, label: `${e.key} - ${e.title}` })),
+      options: epics.map(e => ({ value: e.id, label: `${e.key || 'EPIC'} - ${e.title}` })),
       required: true
     },
     {

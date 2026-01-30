@@ -16,7 +16,7 @@ const TestCaseForm = ({ onSubmit, initialData, acceptanceCriterionId, onCancel }
             name: 'acceptance_criterion_id',
             label: 'Parent Criterion',
             type: 'select' as const,
-            options: acceptanceCriteria.map(ac => ({ value: ac.id, label: `AC: Given ${ac.given.substring(0, 50)}...` })),
+            options: acceptanceCriteria.map(ac => ({ value: ac.id, label: `${ac.key}: Given ${ac.given.substring(0, 50)}...` })),
             required: true
         },
         { name: 'preconditions', label: 'Preconditions', type: 'textarea' as const, required: true, placeholder: 'Initial context or setup' },

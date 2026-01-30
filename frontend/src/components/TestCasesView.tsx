@@ -15,7 +15,7 @@ interface TestCasesViewProps {
 }
 
 const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesViewProps) => {
-    const { state } = useAppContext();
+    const { state, dispatch } = useAppContext();
     const { selectedProjectId } = state;
     const { stories, loading: storiesLoading } = useStories();
     const { epics, loading: epicsLoading } = useEpics();
@@ -73,10 +73,35 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
     };
 
     if (tcLoading || acLoading || storiesLoading || epicsLoading) return <div className="p-8 text-center text-gray-500">Loading test cases...</div>;
-    if (tcError) return <div className="p-8 text-center text-red-500">Error: {tcError}</div>;
+    const clearError = () => {
+        dispatch({ type: 'SET_ERROR', entity: 'testCases', error: null });
+    };
+
+    if (tcLoading || acLoading || storiesLoading || epicsLoading) return <div className="p-8 text-center text-gray-500">Loading test cases...</div>;
 
     return (
         <div className="container mx-auto px-6 py-8">
+            {tcError && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r shadow-sm animate-fade-in flex justify-between items-start">
+                    <div className="flex items-start">
+                        <svg className="w-5 h-5 text-red-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <h3 className="text-red-800 font-medium">Action Failed</h3>
+                            <p className="text-red-700 text-sm mt-1">{tcError}</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={clearError}
+                        className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex-col">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
