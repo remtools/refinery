@@ -81,7 +81,15 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                     <StoryForm
                         onSubmit={async (data) => {
                             if (editingStory) {
-                                await updateStory(editingStory.id, data);
+                                const updateData = {
+                                    epic_id: data.epic_id,
+                                    actor: data.actor,
+                                    action: data.action,
+                                    outcome: data.outcome,
+                                    status: data.status,
+                                    updated_by: 'user'
+                                };
+                                await updateStory(editingStory.id, updateData);
                                 setEditingStory(null);
                             } else {
                                 await createStory(data);

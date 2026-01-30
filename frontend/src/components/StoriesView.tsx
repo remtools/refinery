@@ -43,7 +43,15 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
   };
 
   const handleUpdateStory = async (id: string, data: any) => {
-    await updateStory(id, { ...data, updated_by: 'user' });
+    const updateData = {
+      epic_id: data.epic_id,
+      actor: data.actor,
+      action: data.action,
+      outcome: data.outcome,
+      status: data.status,
+      updated_by: 'user'
+    };
+    await updateStory(id, updateData);
     setEditingStory(null);
   };
 
