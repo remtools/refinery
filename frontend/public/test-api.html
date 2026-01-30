@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .loading { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>Frontend-Backend Connection Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(message, type) {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        async function testConnection() {
+            addResult('Testing backend connection...', 'loading');
+            
+            try {
+                // Test health endpoint
+                const healthResponse = await fetch('/api/health');
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    addResult(`✓ Backend health check: ${healthData.status}`, 'success');
+                } else {
+                    addResult(`✗ Backend health check failed: ${healthResponse.status}`, 'error');
+                    return;
+                }
+
+                // Test epics endpoint
+                addResult('Testing epics API...', 'loading');
+                const epicsResponse = await fetch('/api/epics');
+                if (epicsResponse.ok) {
+                    const epicsData = await epicsResponse.json();
+                    addResult(`✓ Epics API working! Found ${epicsData.length} epics:`, 'success');
+                    epicsData.forEach(epic => {
+                        addResult(`  - ${epic.key}: ${epic.title}`, 'success');
+                    });
+                } else {
+                    addResult(`✗ Epics API failed: ${epicsResponse.status}`, 'error');
+                }
+
+                // Test creating a new epic
+                addResult('Testing epic creation...', 'loading');
+                const createResponse = await fetch('/api/epics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        key: 'TEST-001',
+                        title: 'Test Epic from Frontend',
+                        description: 'This epic was created to test the frontend-backend connection',
+                        created_by: 'frontend-test'
+                    })
+                });
+
+                if (createResponse.ok) {
+                    const createdEpic = await createResponse.json();
+                    addResult(`✓ Epic creation successful! Created epic with ID: ${createdEpic.id}`, 'success');
+                } else {
+                    const errorData = await createResponse.json().catch(() => ({}));
+                    addResult(`✗ Epic creation failed: ${errorData.error || createResponse.statusText}`, 'error');
+                }
+
+            } catch (error) {
+                addResult(`✗ Connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Run the test when page loads
+        testConnection();
+    </script>
+</body>
+</html>

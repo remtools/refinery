@@ -1,0 +1,92 @@
+import { db } from './index.js';
+
+const createTables = async () => {
+  console.log('Creating database tables...');
+
+  // Epics table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS epics (
+      id TEXT PRIMARY KEY,
+      key TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL
+    )
+  `);
+
+  // Stories table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS stories (
+      id TEXT PRIMARY KEY,
+      epic_id TEXT NOT NULL,
+      actor TEXT NOT NULL,
+      action TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (epic_id) REFERENCES epics(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Acceptance Criteria table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS acceptance_criteria (
+      id TEXT PRIMARY KEY,
+      story_id TEXT NOT NULL,
+      given TEXT NOT NULL,
+      "when" TEXT NOT NULL,
+      "then" TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      valid INTEGER NOT NULL DEFAULT 1,
+      risk TEXT NOT NULL CHECK (risk IN ('Low', 'Medium', 'High')),
+      comments TEXT DEFAULT '',
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Test Cases table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS test_cases (
+      id TEXT PRIMARY KEY,
+      acceptance_criterion_id TEXT NOT NULL,
+      preconditions TEXT NOT NULL,
+      steps TEXT NOT NULL,
+      expected_result TEXT NOT NULL,
+      priority TEXT NOT NULL CHECK (priority IN ('Low', 'Medium', 'High')),
+      test_status TEXT NOT NULL CHECK (test_status IN ('Not Run', 'Pass', 'Fail', 'Blocked')),
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (acceptance_criterion_id) REFERENCES acceptance_criteria(id) ON DELETE CASCADE
+    )
+  `);
+
+  console.log('Tables created successfully!');
+};
+
+const main = async () => {
+  try {
+    await db.connect();
+    await createTables();
+    console.log('Migration completed successfully!');
+  } catch (error) {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  } finally {
+    await db.close();
+  }
+};
+
+main();
