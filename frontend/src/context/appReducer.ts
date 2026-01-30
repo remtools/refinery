@@ -1,26 +1,34 @@
 import { AppState, AppAction } from '../types';
 
 const initialState: AppState = {
+  projects: [],
   epics: [],
   stories: [],
   acceptanceCriteria: [],
   testCases: [],
+  actors: [],
   loading: {
+    projects: false,
     epics: false,
     stories: false,
     acceptanceCriteria: false,
     testCases: false,
+    actors: false,
   },
+  selectedProjectId: localStorage.getItem('selectedProjectId'),
   errors: {
+    projects: null,
     epics: null,
     stories: null,
     acceptanceCriteria: null,
     testCases: null,
+    actors: null,
   },
 };
 
 export const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
+    // ... existing cases ...
     case 'SET_LOADING':
       return {
         ...state,
@@ -33,10 +41,45 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_ERROR':
       return {
         ...state,
+        loading: {
+          ...state.loading,
+          [action.entity]: false,
+        },
         errors: {
           ...state.errors,
           [action.entity]: action.error,
         },
+      };
+
+    case 'SET_PROJECTS':
+      return {
+        ...state,
+        projects: action.projects,
+        loading: { ...state.loading, projects: false },
+        errors: { ...state.errors, projects: null },
+      };
+
+    case 'ADD_PROJECT':
+      return {
+        ...state,
+        projects: [...state.projects, action.project],
+      };
+
+    case 'UPDATE_PROJECT':
+      return {
+        ...state,
+        projects: state.projects.map((project) =>
+          project.id === action.id ? { ...project, ...action.project } : project
+        ),
+      };
+
+    case 'DELETE_PROJECT':
+      return {
+        ...state,
+        projects: state.projects.filter((project) => project.id !== action.id),
+        // Cascading delete for projects -> epics is complex in memory without back-references
+        // For simplicity, we filter only epics that explicitly reference this project
+        epics: state.epics.filter((epic) => epic.project_id !== action.id),
       };
 
     case 'SET_EPICS':
@@ -172,6 +215,45 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         testCases: state.testCases.filter((testCase) => testCase.id !== action.id),
+      };
+
+    case 'SET_SELECTED_PROJECT_ID':
+      if (action.id) {
+        localStorage.setItem('selectedProjectId', action.id);
+      } else {
+        localStorage.removeItem('selectedProjectId');
+      }
+      return {
+        ...state,
+        selectedProjectId: action.id,
+      };
+
+    case 'SET_ACTORS':
+      return {
+        ...state,
+        actors: action.actors,
+        loading: { ...state.loading, actors: false },
+        errors: { ...state.errors, actors: null },
+      };
+
+    case 'ADD_ACTOR':
+      return {
+        ...state,
+        actors: [...state.actors, action.actor],
+      };
+
+    case 'UPDATE_ACTOR':
+      return {
+        ...state,
+        actors: state.actors.map((actor) =>
+          actor.id === action.id ? { ...actor, ...action.actor } : actor
+        ),
+      };
+
+    case 'DELETE_ACTOR':
+      return {
+        ...state,
+        actors: state.actors.filter((actor) => actor.id !== action.id),
       };
 
     default:

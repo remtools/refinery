@@ -1,10 +1,43 @@
 import { api } from '../utils/api';
-import { type Epic, type Story, type AcceptanceCriterion, type TestCase } from '../types';
+import { type Project, type Epic, type Story, type AcceptanceCriterion, type TestCase, type Actor } from '../types';
+
+// Project services
+export const projectService = {
+  async fetchProjects(): Promise<Project[]> {
+    return api.getProjects();
+  },
+
+  async fetchProject(id: string): Promise<Project> {
+    return api.getProject(id);
+  },
+
+  async createProject(data: {
+    name: string;
+    description: string;
+    status: 'Active' | 'Archived' | 'Planned';
+    created_by: string;
+  }): Promise<Project> {
+    return api.createProject(data);
+  },
+
+  async updateProject(id: string, data: {
+    name?: string;
+    description?: string;
+    status?: 'Active' | 'Archived' | 'Planned';
+    updated_by: string;
+  }): Promise<Project> {
+    return api.updateProject(id, data);
+  },
+
+  async deleteProject(id: string): Promise<void> {
+    return api.deleteProject(id);
+  },
+};
 
 // Epic services
 export const epicService = {
-  async fetchEpics(): Promise<Epic[]> {
-    const result = await api.getEpics();
+  async fetchEpics(projectId?: string): Promise<Epic[]> {
+    const result = await api.getEpics(projectId);
     return result as Epic[];
   },
 
@@ -13,6 +46,7 @@ export const epicService = {
   },
 
   async createEpic(data: {
+    project_id?: string;
     key: string;
     title: string;
     description: string;
@@ -22,6 +56,7 @@ export const epicService = {
   },
 
   async updateEpic(id: string, data: {
+    project_id?: string;
     key?: string;
     title?: string;
     description?: string;
@@ -144,5 +179,36 @@ export const testCaseService = {
 
   async deleteTestCase(id: string): Promise<void> {
     return api.deleteTestCase(id);
+  },
+};
+
+// Actor services
+export const actorService = {
+  async fetchActors(projectId?: string): Promise<Actor[]> {
+    const result = await api.getActors(projectId);
+    return result as Actor[];
+  },
+
+  async createActor(data: {
+    project_id: string;
+    name: string;
+    role?: string;
+    description?: string;
+    created_by: string;
+  }): Promise<Actor> {
+    return api.createActor(data);
+  },
+
+  async updateActor(id: string, data: {
+    name?: string;
+    role?: string;
+    description?: string;
+    updated_by: string;
+  }): Promise<Actor> {
+    return api.updateActor(id, data);
+  },
+
+  async deleteActor(id: string): Promise<void> {
+    return api.deleteActor(id);
   },
 };

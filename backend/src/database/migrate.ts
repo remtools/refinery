@@ -3,10 +3,26 @@ import { db } from './index.js';
 const createTables = async () => {
   console.log('Creating database tables...');
 
+  // Projects table
+  console.log('Creating projects table...');
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Active', 'Archived', 'Planned')),
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL
+    )
+  `);
+
   // Epics table
   await db.run(`
     CREATE TABLE IF NOT EXISTS epics (
       id TEXT PRIMARY KEY,
+      project_id TEXT,
       key TEXT UNIQUE NOT NULL,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
@@ -14,9 +30,22 @@ const createTables = async () => {
       created_at TEXT NOT NULL,
       created_by TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      updated_by TEXT NOT NULL
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
     )
   `);
+
+  // Ensure project_id column exists if table was already there
+  try {
+    const columns = await db.all('PRAGMA table_info(epics)');
+    const hasProjectId = columns.some((col: any) => col.name === 'project_id');
+    if (!hasProjectId) {
+      console.log('Adding project_id column to epics table...');
+      await db.run('ALTER TABLE epics ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE SET NULL');
+    }
+  } catch (error) {
+    console.error('Error checking/adding project_id to epics:', error);
+  }
 
   // Stories table
   await db.run(`
@@ -70,6 +99,22 @@ const createTables = async () => {
       updated_at TEXT NOT NULL,
       updated_by TEXT NOT NULL,
       FOREIGN KEY (acceptance_criterion_id) REFERENCES acceptance_criteria(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Actors table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS actors (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      role TEXT,
+      description TEXT,
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     )
   `);
 

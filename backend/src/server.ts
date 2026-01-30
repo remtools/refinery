@@ -4,16 +4,22 @@ import { errorHandler } from './middleware/index.js';
 import { db } from './database/index.js';
 
 // Import routes
+import projectsRouter from './routes/projects.js';
 import epicsRouter from './routes/epics.js';
 import storiesRouter from './routes/stories.js';
 import acceptanceCriteriaRouter from './routes/acceptance-criteria.js';
 import testCasesRouter from './routes/test-cases.js';
+import actorsRouter from './routes/actors.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins for dev simplicity
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Health check endpoint
@@ -22,10 +28,12 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/projects', projectsRouter);
 app.use('/api/epics', epicsRouter);
 app.use('/api/stories', storiesRouter);
 app.use('/api/acceptance-criteria', acceptanceCriteriaRouter);
 app.use('/api/test-cases', testCasesRouter);
+app.use('/api/actors', actorsRouter);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -39,7 +47,7 @@ const startServer = async () => {
   try {
     await db.connect();
     console.log('Database connected successfully');
-    
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

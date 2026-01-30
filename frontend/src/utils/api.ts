@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.DEV ? '/api' : 'http://localhost:3001/api';
+// Direct backend connection to avoid proxy issues, relying on CORS
+const API_BASE_URL = 'http://127.0.0.1:3001/api';
 
 export const api = {
   // Generic fetch wrapper
@@ -14,9 +15,13 @@ export const api = {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (errorData.details) {
+          const details = errorData.details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+          throw new Error(`${errorData.error} - ${details}`);
+        }
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -31,9 +36,39 @@ export const api = {
     }
   },
 
+  // Projects
+  async getProjects() {
+    return this.request('/projects');
+  },
+
+  async getProject(id: string) {
+    return this.request(`/projects/${id}`);
+  },
+
+  async createProject(data: any) {
+    return this.request('/projects', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateProject(id: string, data: any) {
+    return this.request(`/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteProject(id: string) {
+    return this.request(`/projects/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Epics
-  async getEpics() {
-    return this.request('/epics');
+  async getEpics(projectId?: string) {
+    const endpoint = projectId ? `/epics?project_id=${projectId}` : '/epics';
+    return this.request(endpoint);
   },
 
   async getEpic(id: string) {
@@ -143,6 +178,32 @@ export const api = {
 
   async deleteTestCase(id: string) {
     return this.request(`/test-cases/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Actors
+  async getActors(projectId?: string) {
+    const endpoint = projectId ? `/actors?project_id=${projectId}` : '/actors';
+    return this.request(endpoint);
+  },
+
+  async createActor(data: any) {
+    return this.request('/actors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateActor(id: string, data: any) {
+    return this.request(`/actors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteActor(id: string) {
+    return this.request(`/actors/${id}`, {
       method: 'DELETE',
     });
   },

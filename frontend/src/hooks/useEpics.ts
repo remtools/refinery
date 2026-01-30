@@ -1,8 +1,8 @@
 import { useAppContext } from '../context/AppContext';
 
 export const useEpics = () => {
-  const { 
-    state, 
+  const {
+    state,
     fetchEpics,
     createEpic: contextCreateEpic,
     updateEpic: contextUpdateEpic,
@@ -13,7 +13,7 @@ export const useEpics = () => {
     epics: state.epics,
     loading: state.loading.epics,
     error: state.errors.epics,
-    loadEpics: fetchEpics,
+    fetchEpics,
     createEpic: contextCreateEpic,
     updateEpic: contextUpdateEpic,
     deleteEpic: contextDeleteEpic,

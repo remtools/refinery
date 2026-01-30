@@ -1,5 +1,17 @@
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: 'Active' | 'Archived' | 'Planned';
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+}
+
 export interface Epic {
   id: string;
+  project_id: string;
   key: string;
   title: string;
   description: string;

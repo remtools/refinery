@@ -18,8 +18,12 @@ export class Database {
   }
 
   async run(sql: string, params: any[] = []): Promise<sqlite3.RunResult> {
-    const run = promisify(this.db.run.bind(this.db));
-    return run(sql, params);
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, params, function (err) {
+        if (err) reject(err);
+        else resolve(this);
+      });
+    });
   }
 
   async get<T>(sql: string, params: any[] = []): Promise<T | undefined> {

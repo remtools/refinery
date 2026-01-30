@@ -7,6 +7,10 @@ export class EpicService {
     return db.all<Epic>('SELECT * FROM epics ORDER BY created_at DESC');
   }
 
+  async getByProjectId(projectId: string): Promise<Epic[]> {
+    return db.all<Epic>('SELECT * FROM epics WHERE project_id = ? ORDER BY created_at DESC', [projectId]);
+  }
+
   async getById(id: string): Promise<Epic | undefined> {
     return db.get<Epic>('SELECT * FROM epics WHERE id = ?', [id]);
   }
@@ -16,6 +20,7 @@ export class EpicService {
   }
 
   async create(data: {
+    project_id?: string;
     key: string;
     title: string;
     description: string;
@@ -23,9 +28,10 @@ export class EpicService {
   }): Promise<Epic> {
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+
     const epic: Epic = {
       id,
+      project_id: data.project_id || '',
       key: data.key,
       title: data.title,
       description: data.description,
@@ -37,10 +43,10 @@ export class EpicService {
     };
 
     await db.run(`
-      INSERT INTO epics (id, key, title, description, status, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO epics (id, project_id, key, title, description, status, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      epic.id, epic.key, epic.title, epic.description, epic.status,
+      epic.id, epic.project_id, epic.key, epic.title, epic.description, epic.status,
       epic.created_at, epic.created_by, epic.updated_at, epic.updated_by
     ]);
 
@@ -48,6 +54,7 @@ export class EpicService {
   }
 
   async update(id: string, data: {
+    project_id?: string;
     key?: string;
     title?: string;
     description?: string;
@@ -68,6 +75,10 @@ export class EpicService {
     const updates: string[] = [];
     const values: any[] = [];
 
+    if (data.project_id !== undefined) {
+      updates.push('project_id = ?');
+      values.push(data.project_id);
+    }
     if (data.key !== undefined) {
       updates.push('key = ?');
       values.push(data.key);

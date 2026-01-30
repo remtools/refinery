@@ -5,11 +5,12 @@ interface StoryCardProps {
   story: Story;
   onEdit: () => void;
   onDelete: () => void;
+  onViewAcceptanceCriteria?: () => void;
 }
 
-const StoryCard = ({ story, onEdit, onDelete }: StoryCardProps) => {
+const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryCardProps) => {
   const { epics } = useEpics();
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Draft':
@@ -48,11 +49,10 @@ const StoryCard = ({ story, onEdit, onDelete }: StoryCardProps) => {
           <button
             onClick={onEdit}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-            }`}
+            className={`p-2 rounded-md ${isLocked
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              }`}
             title={isLocked ? 'Cannot edit locked story' : 'Edit story'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,11 +62,10 @@ const StoryCard = ({ story, onEdit, onDelete }: StoryCardProps) => {
           <button
             onClick={onDelete}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-red-50 text-red-600 hover:bg-red-100'
-            }`}
+            className={`p-2 rounded-md ${isLocked
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-red-50 text-red-600 hover:bg-red-100'
+              }`}
             title={isLocked ? 'Cannot delete locked story' : 'Delete story'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,8 +74,8 @@ const StoryCard = ({ story, onEdit, onDelete }: StoryCardProps) => {
           </button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-6">
         <div>
           <span className="font-medium text-gray-700">Actor:</span>
           <span className="ml-2 text-gray-600">{story.actor}</span>
@@ -90,10 +89,23 @@ const StoryCard = ({ story, onEdit, onDelete }: StoryCardProps) => {
           <span className="ml-2 text-gray-600">{story.outcome}</span>
         </div>
       </div>
-      
-      <div className="flex justify-between items-center text-xs text-gray-500 mt-4">
-        <span>Created: {new Date(story.created_at).toLocaleDateString()}</span>
-        <span>Updated: {new Date(story.updated_at).toLocaleDateString()}</span>
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-50">
+        <div className="flex flex-col text-xs text-gray-500">
+          <span>Created: {new Date(story.created_at).toLocaleDateString()}</span>
+        </div>
+
+        {onViewAcceptanceCriteria && (
+          <button
+            onClick={onViewAcceptanceCriteria}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium shadow-sm"
+          >
+            View Criteria
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

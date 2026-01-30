@@ -35,7 +35,7 @@ const ModernLayout = ({ children, currentView, onNavigate }: ModernLayoutProps) 
         </header>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto flex flex-col">
           {children}
         </div>
       </main>

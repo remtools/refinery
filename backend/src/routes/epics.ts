@@ -9,7 +9,22 @@ const epicService = new EpicService();
 // GET /api/epics
 router.get('/', async (req, res, next) => {
   try {
+    const { project_id } = req.query;
+    if (project_id) {
+      const epics = await epicService.getByProjectId(project_id as string);
+      return res.json(epics);
+    }
     const epics = await epicService.getAll();
+    return res.json(epics);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// GET /api/epics/project/:projectId
+router.get('/project/:projectId', async (req, res, next) => {
+  try {
+    const epics = await epicService.getByProjectId(req.params.projectId);
     return res.json(epics);
   } catch (error) {
     return next(error);

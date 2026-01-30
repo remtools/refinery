@@ -2,17 +2,25 @@ import { createContext, useContext, useReducer, useEffect, type ReactNode } from
 import { appReducer, initialState } from './appReducer';
 import { type AppAction } from '../types';
 import {
+  projectService,
   epicService,
   storyService,
   acceptanceCriterionService,
   testCaseService,
+  actorService,
 } from '../services';
 
 interface AppContextType {
   state: ReturnType<typeof appReducer>;
   dispatch: React.Dispatch<AppAction>;
+  setSelectedProjectId: (id: string | null) => void;
+  // Project actions
+  fetchProjects: () => Promise<void>;
+  createProject: (data: any) => Promise<void>;
+  updateProject: (id: string, data: any) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   // Epic actions
-  fetchEpics: () => Promise<void>;
+  fetchEpics: (projectId?: string) => Promise<void>;
   createEpic: (data: any) => Promise<void>;
   updateEpic: (id: string, data: any) => Promise<void>;
   deleteEpic: (id: string) => Promise<void>;
@@ -31,6 +39,11 @@ interface AppContextType {
   createTestCase: (data: any) => Promise<void>;
   updateTestCase: (id: string, data: any) => Promise<void>;
   deleteTestCase: (id: string) => Promise<void>;
+  // Actor actions
+  fetchActors: (projectId?: string) => Promise<void>;
+  createActor: (data: any) => Promise<void>;
+  updateActor: (id: string, data: any) => Promise<void>;
+  deleteActor: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,14 +53,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Fetch initial data
   useEffect(() => {
-    fetchEpics();
+    fetchProjects();
   }, []);
 
+  // Project functions
+  const fetchProjects = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', entity: 'projects', loading: true });
+      const projects = await projectService.fetchProjects();
+      dispatch({ type: 'SET_PROJECTS', projects });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const createProject = async (data: any) => {
+    try {
+      const project = await projectService.createProject(data);
+      dispatch({ type: 'ADD_PROJECT', project });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const updateProject = async (id: string, data: any) => {
+    try {
+      const project = await projectService.updateProject(id, data);
+      dispatch({ type: 'UPDATE_PROJECT', id, project });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const deleteProject = async (id: string) => {
+    try {
+      await projectService.deleteProject(id);
+      dispatch({ type: 'DELETE_PROJECT', id });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'projects', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
   // Epic functions
-  const fetchEpics = async () => {
+  const fetchEpics = async (projectId?: string) => {
     try {
       dispatch({ type: 'SET_LOADING', entity: 'epics', loading: true });
-      const epics = await epicService.fetchEpics();
+      const epics = await epicService.fetchEpics(projectId);
       dispatch({ type: 'SET_EPICS', epics });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', entity: 'epics', error: error instanceof Error ? error.message : 'Unknown error' });
@@ -207,11 +261,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Actor functions
+  const fetchActors = async (projectId?: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', entity: 'actors', loading: true });
+      const actors = await actorService.fetchActors(projectId);
+      dispatch({ type: 'SET_ACTORS', actors });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'actors', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const createActor = async (data: any) => {
+    try {
+      const actor = await actorService.createActor(data);
+      dispatch({ type: 'ADD_ACTOR', actor });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'actors', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const updateActor = async (id: string, data: any) => {
+    try {
+      const actor = await actorService.updateActor(id, data);
+      dispatch({ type: 'UPDATE_ACTOR', id, actor });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'actors', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const deleteActor = async (id: string) => {
+    try {
+      await actorService.deleteActor(id);
+      dispatch({ type: 'DELETE_ACTOR', id });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', entity: 'actors', error: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  };
+
+  const setSelectedProjectId = (id: string | null) => {
+    dispatch({ type: 'SET_SELECTED_PROJECT_ID', id });
+  };
+
   return (
     <AppContext.Provider
       value={{
         state,
         dispatch,
+        fetchProjects,
+        createProject,
+        updateProject,
+        deleteProject,
         fetchEpics,
         createEpic,
         updateEpic,
@@ -228,6 +331,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createTestCase,
         updateTestCase,
         deleteTestCase,
+        fetchActors,
+        createActor,
+        updateActor,
+        deleteActor,
+        setSelectedProjectId,
       }}
     >
       {children}
