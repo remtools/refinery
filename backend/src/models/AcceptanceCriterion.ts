@@ -15,8 +15,18 @@ export class AcceptanceCriterionService {
     return db.all<AcceptanceCriterion>('SELECT * FROM acceptance_criteria WHERE story_id = ? ORDER BY created_at DESC', [storyId]);
   }
 
+  async generateNextKey(): Promise<string> {
+    const last = await db.get<{ key: string }>('SELECT key FROM acceptance_criteria WHERE key LIKE \'AC-%\' ORDER BY length(key) DESC, key DESC LIMIT 1');
+    if (!last || !last.key) return 'AC-001';
+    const match = last.key.match(/AC-(\d+)/);
+    if (!match) return 'AC-001';
+    const nextNum = parseInt(match[1]) + 1;
+    return `AC-${nextNum.toString().padStart(3, '0')}`;
+  }
+
   async create(data: {
     story_id: string;
+    key?: string; // Optional
     given: string;
     when: string;
     then: string;
@@ -31,10 +41,12 @@ export class AcceptanceCriterionService {
 
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+    const key = data.key || await this.generateNextKey();
+
     const ac: AcceptanceCriterion = {
       id,
       story_id: data.story_id,
+      key,
       given: data.given,
       when: data.when,
       then: data.then,
@@ -49,10 +61,10 @@ export class AcceptanceCriterionService {
     };
 
     await db.run(`
-      INSERT INTO acceptance_criteria (id, story_id, given, "when", "then", status, valid, risk, comments, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO acceptance_criteria (id, story_id, key, given, "when", "then", status, valid, risk, comments, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      ac.id, ac.story_id, ac.given, ac.when, ac.then, ac.status, ac.valid ? 1 : 0,
+      ac.id, ac.story_id, ac.key, ac.given, ac.when, ac.then, ac.status, ac.valid ? 1 : 0,
       ac.risk, ac.comments, ac.created_at, ac.created_by, ac.updated_at, ac.updated_by
     ]);
 

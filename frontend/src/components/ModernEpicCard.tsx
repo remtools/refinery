@@ -51,11 +51,11 @@ const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCar
   const updatedDate = new Date(epic.updated_at);
 
   const viewButtonProps = "p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200";
-  const editButtonProps = isLocked 
-    ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg" 
+  const editButtonProps = isLocked
+    ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg"
     : "p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200";
-  const deleteButtonProps = isLocked 
-    ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg" 
+  const deleteButtonProps = isLocked
+    ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg"
     : "p-2 text-gray-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200";
 
   return (
@@ -72,45 +72,8 @@ const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCar
               <span>{epic.status}</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Content Section */}
-      <div className="p-6">
-        <div className="mb-4">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-            {epic.title}
-          </h3>
-          <p className="text-gray-600 text-base leading-relaxed line-clamp-3">
-            {epic.description}
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{createdDate.toLocaleDateString()}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>{updatedDate.toLocaleDateString()}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onViewStories}
-              className={viewButtonProps}
-              title="View stories"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-            </button>
+          <div className="flex items-center gap-1">
             <button
               onClick={onEdit}
               disabled={isLocked}
@@ -132,6 +95,40 @@ const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCar
               </svg>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-6">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+            {epic.title}
+          </h3>
+          <p className="text-gray-600 text-base leading-relaxed line-clamp-3">
+            {epic.description}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{createdDate.toLocaleDateString()}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={onViewStories}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium shadow-sm"
+          >
+            View Stories
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

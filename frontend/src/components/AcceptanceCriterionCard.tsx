@@ -1,19 +1,19 @@
 import { AcceptanceCriterion } from '../types';
-import { useStories } from '../hooks/useStories';
 
 interface AcceptanceCriterionCardProps {
   acceptanceCriterion: AcceptanceCriterion;
   onEdit: () => void;
   onDelete: () => void;
+  onViewTestCases?: () => void;
 }
 
-const AcceptanceCriterionCard = ({ 
-  acceptanceCriterion, 
-  onEdit, 
-  onDelete 
+const AcceptanceCriterionCard = ({
+  acceptanceCriterion,
+  onEdit,
+  onDelete,
+  onViewTestCases
 }: AcceptanceCriterionCardProps) => {
-  const { stories } = useStories();
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Draft':
@@ -40,10 +40,6 @@ const AcceptanceCriterionCard = ({
     }
   };
 
-  const getStoryTitle = () => {
-    const story = stories.find(s => s.id === acceptanceCriterion.story_id);
-    return story ? `As a ${story.actor}, I want to ${story.action.toLowerCase()}` : 'Unknown Story';
-  };
 
   const isLocked = acceptanceCriterion.status === 'Locked';
 
@@ -52,7 +48,10 @@ const AcceptanceCriterionCard = ({
       <div className="flex justify-between items-start mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm text-blue-600">{getStoryTitle()}</span>
+            <span className="text-primary-600 font-mono text-xs font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+              {acceptanceCriterion.key || 'AC'}
+            </span>
+            {/* Story title removed to reduce redundancy */}
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(acceptanceCriterion.status)}`}>
               {acceptanceCriterion.status}
             </span>
@@ -70,11 +69,10 @@ const AcceptanceCriterionCard = ({
           <button
             onClick={onEdit}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-            }`}
+            className={`p-2 rounded-md ${isLocked
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              }`}
             title={isLocked ? 'Cannot edit locked acceptance criterion' : 'Edit acceptance criterion'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,11 +82,10 @@ const AcceptanceCriterionCard = ({
           <button
             onClick={onDelete}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-red-50 text-red-600 hover:bg-red-100'
-            }`}
+            className={`p-2 rounded-md ${isLocked
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-red-50 text-red-600 hover:bg-red-100'
+              }`}
             title={isLocked ? 'Cannot delete locked acceptance criterion' : 'Delete acceptance criterion'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,8 +94,8 @@ const AcceptanceCriterionCard = ({
           </button>
         </div>
       </div>
-      
-      <div className="space-y-3 mb-4">
+
+      <div className="space-y-3 mb-6">
         <div>
           <span className="font-semibold text-gray-700">Given:</span>
           <p className="text-gray-600 mt-1">{acceptanceCriterion.given}</p>
@@ -112,17 +109,30 @@ const AcceptanceCriterionCard = ({
           <p className="text-gray-600 mt-1">{acceptanceCriterion.then}</p>
         </div>
       </div>
-      
+
       {acceptanceCriterion.comments && (
         <div className="mb-4">
           <span className="font-semibold text-gray-700">Comments:</span>
           <p className="text-gray-600 mt-1 text-sm">{acceptanceCriterion.comments}</p>
         </div>
       )}
-      
-      <div className="flex justify-between items-center text-xs text-gray-500">
-        <span>Created: {new Date(acceptanceCriterion.created_at).toLocaleDateString()}</span>
-        <span>Updated: {new Date(acceptanceCriterion.updated_at).toLocaleDateString()}</span>
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-50">
+        <div className="flex flex-col text-xs text-gray-500">
+          <span>Created: {new Date(acceptanceCriterion.created_at).toLocaleDateString()}</span>
+        </div>
+
+        {onViewTestCases && (
+          <button
+            onClick={onViewTestCases}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium shadow-sm"
+          >
+            View Test Cases
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -4,15 +4,95 @@ import { v4 as uuidv4 } from 'uuid';
 const seedData = async () => {
   console.log('Seeding database with sample data...');
 
-  // Sample Epic
-  const epicId = uuidv4();
   const now = new Date().toISOString();
-  
+
+  console.log('Clearing existing data...');
+  await db.run('DELETE FROM test_cases');
+  await db.run('DELETE FROM acceptance_criteria');
+  await db.run('DELETE FROM stories');
+  await db.run('DELETE FROM epics');
+  await db.run('DELETE FROM actors');
+  await db.run('DELETE FROM projects');
+
+  // Sample Project
+  const projectId = uuidv4();
+  console.log('Inserting Project...');
   await db.run(`
-    INSERT INTO epics (id, key, title, description, status, created_at, created_by, updated_at, updated_by)
+    INSERT INTO projects (id, name, description, status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    projectId,
+    'E-Commerce Platform',
+    'A modern e-commerce solution with advanced cart and checkout features.',
+    'Active',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  // Sample Actors
+  const adminActorId = uuidv4();
+  const customerActorId = uuidv4();
+  const guestActorId = uuidv4();
+  console.log('Inserting Actors...');
+
+  await db.run(`
+    INSERT INTO actors (id, project_id, name, role, description, created_at, created_by, updated_at, updated_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
-    epicId,
+    adminActorId,
+    projectId,
+    'Admin User',
+    'Administrator',
+    'Has full access to the system backend.',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  await db.run(`
+    INSERT INTO actors (id, project_id, name, role, description, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    customerActorId,
+    projectId,
+    'Registered Customer',
+    'Customer',
+    'A user who has created an account and can make purchases.',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  await db.run(`
+    INSERT INTO actors (id, project_id, name, role, description, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    guestActorId,
+    projectId,
+    'Guest User',
+    'Visitor',
+    'An unauthenticated visitor browsing the site.',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  // Sample Epics
+  const authEpicId = uuidv4();
+  const cartEpicId = uuidv4();
+  console.log('Inserting Epics...');
+
+  await db.run(`
+    INSERT INTO epics (id, project_id, key, title, description, status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    authEpicId,
+    projectId,
     'EPIC-001',
     'User Authentication System',
     'Implement secure user authentication and authorization system with login, registration, and password management features.',
@@ -23,17 +103,15 @@ const seedData = async () => {
     'system'
   ]);
 
-  // Sample Story
-  const storyId = uuidv4();
   await db.run(`
-    INSERT INTO stories (id, epic_id, actor, action, outcome, status, created_at, created_by, updated_at, updated_by)
+    INSERT INTO epics (id, project_id, key, title, description, status, created_at, created_by, updated_at, updated_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
-    storyId,
-    epicId,
-    'registered user',
-    'logs in with valid credentials',
-    'is successfully authenticated and redirected to dashboard',
+    cartEpicId,
+    projectId,
+    'EPIC-002',
+    'Shopping Cart Management',
+    'Enable users to add, remove, and manage items in their shopping cart.',
     'Draft',
     now,
     'system',
@@ -41,14 +119,78 @@ const seedData = async () => {
     'system'
   ]);
 
-  // Sample Acceptance Criterion
-  const acId = uuidv4();
+  // Sample Stories
+  const loginStoryId = uuidv4();
+  const registerStoryId = uuidv4();
+  const addToCartStoryId = uuidv4();
+  console.log('Inserting Stories...');
+
   await db.run(`
-    INSERT INTO acceptance_criteria (id, story_id, given, "when", "then", status, valid, risk, comments, created_at, created_by, updated_at, updated_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO stories (id, epic_id, key, actor, actor_id, action, outcome, status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
-    acId,
-    storyId,
+    loginStoryId,
+    authEpicId,
+    'STORY-001',
+    'Registered Customer', // Legacy field for backward compatibility
+    customerActorId,
+    'log in with valid credentials',
+    'be successfully authenticated and redirected to dashboard',
+    'Draft',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  await db.run(`
+    INSERT INTO stories (id, epic_id, key, actor, actor_id, action, outcome, status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    registerStoryId,
+    authEpicId,
+    'STORY-002',
+    'Guest User',
+    guestActorId,
+    'register for a new account',
+    'create an account and receive a confirmation email',
+    'Draft',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  await db.run(`
+    INSERT INTO stories (id, epic_id, key, actor, actor_id, action, outcome, status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    addToCartStoryId,
+    cartEpicId,
+    'STORY-003',
+    'Registered Customer',
+    customerActorId,
+    'add items to my shopping cart',
+    'save items for later purchase',
+    'Draft',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  // Sample Acceptance Criteria
+  const loginAcId = uuidv4();
+  const registerAcId = uuidv4();
+  console.log('Inserting Acceptance Criteria...');
+
+  await db.run(`
+    INSERT INTO acceptance_criteria (id, story_id, key, given, "when", "then", status, valid, risk, comments, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    loginAcId,
+    loginStoryId,
+    'AC-001',
     'I am a registered user with valid credentials',
     'I enter my username and password and click login',
     'I am authenticated successfully and redirected to my dashboard',
@@ -62,17 +204,59 @@ const seedData = async () => {
     'system'
   ]);
 
-  // Sample Test Case
-  const testCaseId = uuidv4();
   await db.run(`
-    INSERT INTO test_cases (id, acceptance_criterion_id, preconditions, steps, expected_result, priority, test_status, created_at, created_by, updated_at, updated_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO acceptance_criteria (id, story_id, key, given, "when", "then", status, valid, risk, comments, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
-    testCaseId,
-    acId,
+    registerAcId,
+    registerStoryId,
+    'AC-002',
+    'I am a guest user on the registration page',
+    'I fill in all required fields and submit the form',
+    'my account is created and I receive a confirmation email',
+    'Draft',
+    1,
+    'High',
+    'Email verification is critical for security',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  // Sample Test Cases
+  const loginTcId = uuidv4();
+  const registerTcId = uuidv4();
+  console.log('Inserting Test Cases...');
+
+  await db.run(`
+    INSERT INTO test_cases (id, acceptance_criterion_id, key, preconditions, steps, expected_result, priority, test_status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    loginTcId,
+    loginAcId,
+    'TC-001',
     'User has valid account in system',
     '1. Navigate to login page\n2. Enter valid username\n3. Enter valid password\n4. Click login button',
     'User is redirected to dashboard with success message',
+    'High',
+    'Not Run',
+    now,
+    'system',
+    now,
+    'system'
+  ]);
+
+  await db.run(`
+    INSERT INTO test_cases (id, acceptance_criterion_id, key, preconditions, steps, expected_result, priority, test_status, created_at, created_by, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    registerTcId,
+    registerAcId,
+    'TC-002',
+    'User is on registration page and email service is available',
+    '1. Navigate to registration page\n2. Enter valid email address\n3. Enter strong password\n4. Confirm password\n5. Click register button',
+    'Account is created and confirmation email is sent',
     'High',
     'Not Run',
     now,

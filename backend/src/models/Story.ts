@@ -15,9 +15,19 @@ export class StoryService {
     return db.all<Story>('SELECT * FROM stories WHERE epic_id = ? ORDER BY created_at DESC', [epicId]);
   }
 
+  async generateNextKey(): Promise<string> {
+    const last = await db.get<{ key: string }>('SELECT key FROM stories WHERE key LIKE "STORY-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
+    if (!last || !last.key) return 'STORY-001';
+    const match = last.key.match(/STORY-(\d+)/);
+    if (!match) return 'STORY-001';
+    const nextNum = parseInt(match[1]) + 1;
+    return `STORY-${nextNum.toString().padStart(3, '0')}`;
+  }
+
   async create(data: {
     epic_id: string;
-    actor: string;
+    key?: string; // Optional now
+    actor_id: string;
     action: string;
     outcome: string;
     created_by: string;
@@ -28,13 +38,21 @@ export class StoryService {
       throw new Error('Referenced epic does not exist');
     }
 
+    // Fetch actor name for backward compatibility
+    const actor = await db.get<{ name: string }>('SELECT name FROM actors WHERE id = ?', [data.actor_id]);
+    if (!actor) {
+      throw new Error('Referenced actor does not exist');
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
-    
+    const key = data.key || await this.generateNextKey();
+
     const story: Story = {
       id,
       epic_id: data.epic_id,
-      actor: data.actor,
+      key,
+      actor_id: data.actor_id,
       action: data.action,
       outcome: data.outcome,
       status: 'Draft',
@@ -45,10 +63,10 @@ export class StoryService {
     };
 
     await db.run(`
-      INSERT INTO stories (id, epic_id, actor, action, outcome, status, created_at, created_by, updated_at, updated_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO stories (id, epic_id, key, actor, actor_id, action, outcome, status, created_at, created_by, updated_at, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      story.id, story.epic_id, story.actor, story.action, story.outcome, story.status,
+      story.id, story.epic_id, story.key, actor.name, story.actor_id, story.action, story.outcome, story.status,
       story.created_at, story.created_by, story.updated_at, story.updated_by
     ]);
 
@@ -56,7 +74,7 @@ export class StoryService {
   }
 
   async update(id: string, data: {
-    actor?: string;
+    actor_id?: string;
     action?: string;
     outcome?: string;
     status?: 'Draft' | 'Approved' | 'Locked';
@@ -76,9 +94,16 @@ export class StoryService {
     const updates: string[] = [];
     const values: any[] = [];
 
-    if (data.actor !== undefined) {
+    if (data.actor_id !== undefined) {
+      // Fetch actor name for backward compatibility
+      const actor = await db.get<{ name: string }>('SELECT name FROM actors WHERE id = ?', [data.actor_id]);
+      if (!actor) {
+        throw new Error('Referenced actor does not exist');
+      }
+      updates.push('actor_id = ?');
       updates.push('actor = ?');
-      values.push(data.actor);
+      values.push(data.actor_id);
+      values.push(actor.name);
     }
     if (data.action !== undefined) {
       updates.push('action = ?');

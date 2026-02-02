@@ -10,7 +10,7 @@ interface EpicCardProps {
 
 const EpicCard = ({ epic, onEdit, onDelete, onViewStories }: EpicCardProps) => {
   const { stories } = useStories(epic.id);
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Draft':
@@ -40,22 +40,12 @@ const EpicCard = ({ epic, onEdit, onDelete, onViewStories }: EpicCardProps) => {
         </div>
         <div className="flex space-x-2">
           <button
-            onClick={() => onViewStories(epic.id)}
-            className="p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100"
-            title="View stories"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </button>
-          <button
             onClick={onEdit}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            className={`p-2 rounded-md ${isLocked
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-            }`}
+              }`}
             title={isLocked ? 'Cannot edit locked epic' : 'Edit epic'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,11 +55,10 @@ const EpicCard = ({ epic, onEdit, onDelete, onViewStories }: EpicCardProps) => {
           <button
             onClick={onDelete}
             disabled={isLocked}
-            className={`p-2 rounded-md ${
-              isLocked 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            className={`p-2 rounded-md ${isLocked
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-red-50 text-red-600 hover:bg-red-100'
-            }`}
+              }`}
             title={isLocked ? 'Cannot delete locked epic' : 'Delete epic'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,17 +67,28 @@ const EpicCard = ({ epic, onEdit, onDelete, onViewStories }: EpicCardProps) => {
           </button>
         </div>
       </div>
-      
+
       <p className="text-gray-600 text-sm mb-4">{epic.description}</p>
-      
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          <span className="font-medium">{stories.length}</span> story{stories.length !== 1 ? 's' : ''}
+
+      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+        <div className="flex flex-col">
+          <div className="text-sm text-gray-500 mb-1">
+            <span className="font-medium">{stories.length}</span> story{stories.length !== 1 ? 's' : ''}
+          </div>
+          <div className="flex space-x-2 text-xs text-gray-400">
+            <span>Created: {new Date(epic.created_at).toLocaleDateString()}</span>
+          </div>
         </div>
-        <div className="flex space-x-2 text-xs text-gray-500">
-          <span>Created: {new Date(epic.created_at).toLocaleDateString()}</span>
-          <span>Updated: {new Date(epic.updated_at).toLocaleDateString()}</span>
-        </div>
+
+        <button
+          onClick={() => onViewStories(epic.id)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium shadow-sm"
+        >
+          View Stories
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
       </div>
     </div>
   );
