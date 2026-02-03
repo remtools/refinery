@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/index.js';
 import { db } from './database/index.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import routes
 import projectsRouter from './routes/projects.js';
@@ -11,8 +14,15 @@ import acceptanceCriteriaRouter from './routes/acceptance-criteria.js';
 import testCasesRouter from './routes/test-cases.js';
 import actorsRouter from './routes/actors.js';
 
+// Load configuration from central config file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const configPath = path.resolve(__dirname, '..', '..', 'config.json');
+const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || config.server.port || 3000;
+const HOST = process.env.HOST || config.server.host || 'localhost';
 
 // Middleware
 app.use(cors({
@@ -48,8 +58,8 @@ const startServer = async () => {
     await db.connect();
     console.log('Database connected successfully');
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`Server running on http://${HOST}:${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
