@@ -1,5 +1,4 @@
-// Direct backend connection to avoid proxy issues, relying on CORS
-const API_BASE_URL = 'http://127.0.0.1:3001/api';
+const API_BASE_URL = '/api' ;
 
 export const api = {
   // Generic fetch wrapper

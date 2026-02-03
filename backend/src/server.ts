@@ -12,7 +12,7 @@ import testCasesRouter from './routes/test-cases.js';
 import actorsRouter from './routes/actors.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
