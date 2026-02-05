@@ -18,39 +18,37 @@ const EpicForm = ({ onSubmit, initialData }: EpicFormProps) => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    if (!formData.key.trim()) {
-      newErrors.key = 'Key is required';
-    } else if (!/^[A-Z0-9-]+$/.test(formData.key)) {
+
+    if (formData.key.trim() && !/^[A-Z0-9-]+$/.test(formData.key)) {
       newErrors.key = 'Key must contain only uppercase letters, numbers, and hyphens';
     }
-    
+
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
     }
-    
+
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     onSubmit(formData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -62,7 +60,7 @@ const EpicForm = ({ onSubmit, initialData }: EpicFormProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-2">
-            Epic Key *
+            Epic Key (Optional)
           </label>
           <input
             type="text"
@@ -70,10 +68,9 @@ const EpicForm = ({ onSubmit, initialData }: EpicFormProps) => {
             name="key"
             value={formData.key}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.key ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="e.g., EPIC-001"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.key ? 'border-red-500' : 'border-gray-300'
+              }`}
+            placeholder="Leave blank for autogeneration (e.g. EP-01)"
             disabled={!!initialData} // Don't allow editing key after creation
           />
           {errors.key && (
@@ -91,9 +88,8 @@ const EpicForm = ({ onSubmit, initialData }: EpicFormProps) => {
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.title ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-500' : 'border-gray-300'
+              }`}
             placeholder="Epic title"
           />
           {errors.title && (
@@ -112,9 +108,8 @@ const EpicForm = ({ onSubmit, initialData }: EpicFormProps) => {
           value={formData.description}
           onChange={handleChange}
           rows={4}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.description ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? 'border-red-500' : 'border-gray-300'
+            }`}
           placeholder="Detailed description of the epic"
         />
         {errors.description && (

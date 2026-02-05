@@ -13,6 +13,8 @@ import storiesRouter from './routes/stories.js';
 import acceptanceCriteriaRouter from './routes/acceptance-criteria.js';
 import testCasesRouter from './routes/test-cases.js';
 import actorsRouter from './routes/actors.js';
+import testSetsRouter from './routes/test-sets.js';
+import testRunsRouter from './routes/test-runs.js';
 
 // Load configuration from central config file
 const __filename = fileURLToPath(import.meta.url);
@@ -44,6 +46,8 @@ app.use('/api/stories', storiesRouter);
 app.use('/api/acceptance-criteria', acceptanceCriteriaRouter);
 app.use('/api/test-cases', testCasesRouter);
 app.use('/api/actors', actorsRouter);
+app.use('/api/test-sets', testSetsRouter);
+app.use('/api/test-runs', testRunsRouter);
 
 // Error handling middleware
 app.use(errorHandler);

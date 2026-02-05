@@ -143,6 +143,53 @@ const createTables = async () => {
     )
   `);
 
+  // Ensure key column exists in test_cases
+  try {
+    const columns = await db.all<any>('PRAGMA table_info(test_cases)');
+    const hasKey = columns.some((col: any) => col.name === 'key');
+    if (!hasKey) {
+      console.log('Adding key column to test_cases table...');
+      await db.run('ALTER TABLE test_cases ADD COLUMN key TEXT');
+    }
+  } catch (error) {
+    console.error('Error checking/adding key to test_cases:', error);
+  }
+
+  // Test Sets table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS test_sets (
+      id TEXT PRIMARY KEY,
+      key TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Planned', 'In Progress', 'Completed')),
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL
+    )
+  `);
+
+  // Test Runs table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS test_runs (
+      id TEXT PRIMARY KEY,
+      test_set_id TEXT NOT NULL,
+      test_case_id TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('Not Run', 'Pass', 'Fail', 'Blocked')),
+      actual_result TEXT,
+      executed_by TEXT,
+      executed_at TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      FOREIGN KEY (test_set_id) REFERENCES test_sets(id) ON DELETE CASCADE,
+      FOREIGN KEY (test_case_id) REFERENCES test_cases(id) ON DELETE CASCADE
+    )
+  `);
+
   console.log('Tables created successfully!');
 };
 

@@ -48,14 +48,21 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                 (tc.preconditions?.toLowerCase() || '').includes(filters.search.toLowerCase()) ||
                 (tc.steps?.toLowerCase() || '').includes(filters.search.toLowerCase()) ||
                 (tc.expected_result?.toLowerCase() || '').includes(filters.search.toLowerCase());
-            const matchesStatus = !filters.status || tc.test_status === filters.status;
-            return matchesSearch && matchesStatus;
+            return matchesSearch;
         });
     }, [testCases, acceptanceCriterionId, selectedProjectId, epics, stories, acceptanceCriteria, filters]);
 
     const parentAc = useMemo(() =>
         acceptanceCriterionId ? acceptanceCriteria.find(ac => ac.id === acceptanceCriterionId) : null
         , [acceptanceCriteria, acceptanceCriterionId]);
+
+    const parentStory = useMemo(() =>
+        parentAc ? stories.find(s => s.id === parentAc.story_id) : null
+        , [stories, parentAc]);
+
+    const actorName = useMemo(() =>
+        parentStory ? actors.find(a => a.id === parentStory.actor_id)?.name || 'Unknown' : 'Unknown'
+        , [actors, parentStory]);
 
     const handleCreate = async (data: any) => {
         await createTestCase({ ...data, created_by: 'user' });
@@ -101,7 +108,7 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                 <div className="flex-col">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                         {parentAc && (() => {
-                            const story = stories.find(s => s.id === parentAc.story_id);
+                            const story = parentStory;
                             const epic = story ? epics.find(e => e.id === story.epic_id) : null;
                             const project = epic ? state.projects.find(p => p.id === epic.project_id) : null;
 
@@ -144,7 +151,7 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                                                 {story.key || 'STORY'}
                                             </span>
                                             <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
-                                                <div className="font-bold mb-1">As a {actors.find(a => a.id === story.actor_id)?.name || 'Unknown'}...</div>
+                                                <div className="font-bold mb-1">As a {actorName}...</div>
                                                 <div className="line-clamp-2">I want to {story.action} so that {story.outcome}</div>
                                             </div>
                                             <span className="text-gray-300">/</span>
@@ -189,6 +196,23 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                 </button>
             </div>
 
+            {parentStory && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-fade-in relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                            <span className="text-blue-600 font-mono text-sm bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                {parentStory.key}
+                            </span>
+                            <span>Story Context</span>
+                        </h3>
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                        <span className="font-semibold text-gray-600">As a</span> {actorName}, <span className="font-semibold text-gray-600">I want to</span> {parentStory.action} <span className="font-semibold text-gray-600">so that</span> {parentStory.outcome}
+                    </p>
+                </div>
+            )}
+
             {
                 parentAc && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 animate-fade-in relative overflow-hidden">
@@ -227,10 +251,8 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                     </div>
                 )
             }
-
             <FilterBar
                 placeholder="Search test cases..."
-                statusOptions={['Not Run', 'Pass', 'Fail', 'Blocked']}
                 onFilterChange={setFilters}
             />
 

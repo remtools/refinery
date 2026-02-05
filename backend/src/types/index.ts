@@ -120,3 +120,30 @@ export interface CreateActorRequest {
   description?: string;
   created_by: string;
 }
+
+export interface TestSet {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  status: 'Planned' | 'In Progress' | 'Completed';
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+}
+
+export interface TestRun {
+  id: string;
+  test_set_id: string;
+  test_case_id: string;
+  status: 'Not Run' | 'Pass' | 'Fail' | 'Blocked';
+  actual_result?: string;
+  notes?: string;
+  executed_by?: string;
+  executed_at?: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+}

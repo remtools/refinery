@@ -9,6 +9,8 @@ import StoriesView from './StoriesView';
 import StoriesListView from './StoriesListView';
 import AcceptanceCriteriaView from './AcceptanceCriteriaView';
 import TestCasesView from './TestCasesView';
+import TestSetsView from './TestSetsView';
+import TestExecutionView from './TestExecutionView';
 import FilterBar from './FilterBar';
 
 const ModernDashboard = () => {
@@ -27,6 +29,7 @@ const ModernDashboard = () => {
   const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [selectedAcId, setSelectedAcId] = useState<string | null>(null);
+  const [selectedTestSetId, setSelectedTestSetId] = useState<string | null>(null);
   const [filters, setFilters] = useState({ search: '', status: '' });
 
   // Sync epics with selected project
@@ -37,7 +40,8 @@ const ModernDashboard = () => {
       setCurrentView('epics');
     }
     // If we have no project selected, force Projects view
-    if (!selectedProjectId) {
+    // But check if we are in Test Sets, as that might be global or project specific
+    if (!selectedProjectId && currentView !== 'test-sets' && currentView !== 'test-run') {
       setCurrentView('projects');
     }
   }, [selectedProjectId]);
@@ -96,6 +100,28 @@ const ModernDashboard = () => {
   };
 
   const renderContent = () => {
+    if (currentView === 'test-sets') {
+      return (
+        <TestSetsView
+          onNavigate={(view, id) => {
+            if (view === 'test-run') {
+              setSelectedTestSetId(id);
+              setCurrentView('test-run');
+            }
+          }}
+        />
+      );
+    }
+
+    if (currentView === 'test-run') {
+      return (
+        <TestExecutionView
+          testSetId={selectedTestSetId || ''}
+          onBack={() => setCurrentView('test-sets')}
+        />
+      );
+    }
+
     if (!selectedProjectId || currentView === 'projects') {
       return (
         <ProjectsView
@@ -318,5 +344,7 @@ const ModernDashboard = () => {
     </ModernLayout>
   );
 };
+
+
 
 export default ModernDashboard;

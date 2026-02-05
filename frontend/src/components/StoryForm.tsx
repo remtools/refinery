@@ -41,6 +41,17 @@ const StoryForm = ({ onSubmit, initialData, epicId, onCancel }: StoryFormProps) 
     },
     { name: 'action', label: 'Action (I want to...)', type: 'text' as const, required: true, placeholder: 'e.g. log in' },
     { name: 'outcome', label: 'Outcome (So that...)', type: 'textarea' as const, required: true, placeholder: 'e.g. I can access my dashboard' },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select' as const,
+      required: true,
+      options: [
+        { value: 'Draft', label: 'Draft' },
+        { value: 'Approved', label: 'Approved' },
+        { value: 'Locked', label: 'Locked' }
+      ]
+    },
   ];
 
   return (

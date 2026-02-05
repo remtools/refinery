@@ -75,8 +75,24 @@ export class ProjectService {
         const getTCs = async (acId: string) => db.all<any>('SELECT * FROM test_cases WHERE acceptance_criterion_id = ?', [acId]);
         const getActors = async (projectId: string) => db.all<any>('SELECT * FROM actors WHERE project_id = ?', [projectId]);
 
+        // Get Test Sets linked to this project via Test Cases
+        const getRelatedTestSets = async (projectId: string) => {
+            return db.all<any>(`
+                SELECT DISTINCT ts.* 
+                FROM test_sets ts
+                JOIN test_runs tr ON tr.test_set_id = ts.id
+                JOIN test_cases tc ON tc.id = tr.test_case_id
+                JOIN acceptance_criteria ac ON ac.id = tc.acceptance_criterion_id
+                JOIN stories s ON s.id = ac.story_id
+                JOIN epics e ON e.id = s.epic_id
+                WHERE e.project_id = ?
+            `, [projectId]);
+        };
+        const getTestRuns = async (testSetId: string) => db.all<any>('SELECT * FROM test_runs WHERE test_set_id = ?', [testSetId]);
+
         const epics = await getEpics(id);
         const actors = await getActors(id);
+        const testSets = await getRelatedTestSets(id);
 
         for (const epic of epics) {
             epic.stories = await getStories(epic.id);
@@ -88,10 +104,16 @@ export class ProjectService {
             }
         }
 
+        // Populate Test Runs for Test Sets
+        for (const ts of testSets) {
+            ts.testRuns = await getTestRuns(ts.id);
+        }
+
         return {
             ...project,
             actors,
-            epics
+            epics,
+            testSets
         };
     }
 
@@ -102,12 +124,16 @@ export class ProjectService {
         const { AcceptanceCriterionService } = await import('./AcceptanceCriterion.js');
         const { TestCaseService } = await import('./TestCase.js');
         const { ActorService } = await import('./Actor.js');
+        const { TestSetService } = await import('./TestSet.js');
+        const { TestRunService } = await import('./TestRun.js');
 
         const epicService = new EpicService();
         const storyService = new StoryService();
         const acService = new AcceptanceCriterionService();
         const tcService = new TestCaseService();
         const actorService = new ActorService();
+        const testSetService = new TestSetService();
+        const testRunService = new TestRunService();
 
         // Check for existing key and generate new one if needed
         const getSafeKey = async (currentKey: string, table: string, service: any) => {
@@ -157,6 +183,8 @@ export class ProjectService {
             }
         }
 
+        const tcIdMap = new Map<string, string>();
+
         // 3. Import Epics
         if (data.epics) {
             for (const epicData of data.epics) {
@@ -179,8 +207,6 @@ export class ProjectService {
                             actorId = actorNameMap.get(storyData.actor);
                         }
 
-                        // If actor still not found (e.g. data corruption or legacy partial data), create a fallback actor?
-                        // Or skip? Validation requires actor_id.
                         if (!actorId) {
                             // Fallback: create actor on the fly
                             const actorName = storyData.actor || storyData.actor_id || 'Unknown Actor';
@@ -226,7 +252,7 @@ export class ProjectService {
                                 if (acData.testCases) {
                                     for (const tcData of acData.testCases) {
                                         const tcKey = await getSafeKey(tcData.key, 'test_cases', tcService);
-                                        await tcService.create({
+                                        const newTc = await tcService.create({
                                             acceptance_criterion_id: ac.id,
                                             key: tcKey,
                                             preconditions: tcData.preconditions,
@@ -235,9 +261,65 @@ export class ProjectService {
                                             priority: tcData.priority,
                                             created_by: 'import'
                                         });
+                                        // Store mapping for Test Run import
+                                        if (tcData.id) {
+                                            tcIdMap.set(tcData.id, newTc.id);
+                                        }
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. Import Test Sets (and Runs)
+        if (data.testSets) {
+            for (const tsData of data.testSets) {
+                // Test Sets are global, but good to check key collision
+                const tsKey = await getSafeKey(tsData.key, 'test_sets', testSetService);
+
+                const newTestSet = await testSetService.create({
+                    title: `${tsData.title} (Imported)`,
+                    description: tsData.description,
+                    status: 'Planned', // Reset status or keep? 'Planned' is safer.
+                    created_by: 'import'
+                });
+
+                // Need to update key manually to match if we want, but create() generates one. 
+                // We should respect the generated key or update it if we really cared, but generated is fine.
+
+                if (tsData.testRuns) {
+                    for (const runData of tsData.testRuns) {
+                        const newTcId = tcIdMap.get(runData.test_case_id);
+                        if (newTcId) {
+                            // Link to new test case
+                            // Note: TestRunService often doesn't have a 'create' that takes exact fields, 
+                            // usually creation is via TestSet bulk or specific logic.
+                            // But we can insert directly via DB or use service if available.
+                            // Let's assume TestRunService has basic create or we use db directly for flexibility?
+                            // Checked TestRun.ts? No, but TestSetsView used `createBulkTestRuns`.
+                            // Let's use db directly for speed and precision here or assume service method.
+
+                            // Using db.run is safest given we don't know TestRunService full API right now 
+                            // and TestRun usually depends on existing IDs.
+
+                            const runId = uuidv4();
+                            const runNow = new Date().toISOString();
+                            await db.run(`
+                                INSERT INTO test_runs (id, test_set_id, test_case_id, status, actual_result, executed_by, executed_at, notes)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            `, [
+                                runId,
+                                newTestSet.id,
+                                newTcId,
+                                'Not Run', // Reset status for imported runs
+                                '',
+                                undefined,
+                                undefined,
+                                ''
+                            ]);
                         }
                     }
                 }

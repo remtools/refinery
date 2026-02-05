@@ -4,7 +4,6 @@ import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
 import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
-import AcceptanceCriterionCard from './AcceptanceCriterionCard';
 import AcceptanceCriterionForm from './AcceptanceCriterionForm';
 import FilterBar from './FilterBar';
 
@@ -31,7 +30,26 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
 
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
-    const [filters, setFilters] = useState({ search: '', status: '' });
+    const [filters, setFilters] = useState({ search: '', status: '', risk: '' });
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Draft': return 'bg-gray-100 text-gray-800';
+            case 'Approved': return 'bg-green-100 text-green-800';
+            case 'Locked': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getRiskColor = (risk: string) => {
+        switch (risk) {
+            case 'Low': return 'bg-blue-100 text-blue-800';
+            case 'Medium': return 'bg-yellow-100 text-yellow-800';
+            case 'High': return 'bg-orange-100 text-orange-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
 
     const filteredCriteria = useMemo(() => {
         let list = acceptanceCriteria;
@@ -47,14 +65,68 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
             list = list.filter(ac => ac.story_id === storyId);
         }
 
-        return list.filter(ac => {
+        let result = list.filter(ac => {
             const matchesSearch = ac.given.toLowerCase().includes(filters.search.toLowerCase()) ||
                 ac.when.toLowerCase().includes(filters.search.toLowerCase()) ||
                 ac.then.toLowerCase().includes(filters.search.toLowerCase());
-            const matchesStatus = !filters.status || ac.risk === filters.status;
-            return matchesSearch && matchesStatus;
+            const matchesStatus = !filters.status || ac.status === filters.status;
+            const matchesRisk = !filters.risk || ac.risk === filters.risk;
+            return matchesSearch && matchesStatus && matchesRisk;
         });
-    }, [acceptanceCriteria, storyId, selectedProjectId, epics, stories, filters]);
+
+        if (sortConfig) {
+            result.sort((a, b) => {
+                let aValue: any = '';
+                let bValue: any = '';
+
+                switch (sortConfig.key) {
+                    case 'key':
+                        aValue = a.key || '';
+                        bValue = b.key || '';
+                        break;
+                    case 'status':
+                        aValue = a.status;
+                        bValue = b.status;
+                        break;
+                    case 'risk':
+                        aValue = a.risk;
+                        bValue = b.risk;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        return result;
+    }, [acceptanceCriteria, storyId, selectedProjectId, epics, stories, filters, sortConfig]);
+
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const SortIcon = ({ columnKey }: { columnKey: string }) => {
+        if (sortConfig?.key !== columnKey) {
+            return (
+                <svg className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+            );
+        }
+        return (
+            <svg className={`w-4 h-4 text-primary-500 transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+        );
+    };
 
     const parentStory = storyId ? stories.find(s => s.id === storyId) : null;
     const parentEpic = parentStory ? epics.find(e => e.id === parentStory.epic_id) : null;
@@ -137,7 +209,8 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
 
             <FilterBar
                 placeholder="Search criteria..."
-                statusOptions={['Low', 'Medium', 'High']}
+                statusOptions={['Draft', 'Approved', 'Locked']}
+                riskOptions={['Low', 'Medium', 'High']}
                 onFilterChange={setFilters}
             />
 
@@ -171,27 +244,108 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                 </div>
             )}
 
-            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {filteredCriteria.length === 0 ? (
-                    <div className="col-span-full py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-200">
+                    <div className="text-center py-20 bg-white">
                         <p className="text-gray-500">
                             {acceptanceCriteria.length === 0 ? "No acceptance criteria found." : "No criteria match your search or project selection."}
                         </p>
                     </div>
                 ) : (
-                    filteredCriteria.map((ac) => (
-                        <AcceptanceCriterionCard
-                            key={ac.id}
-                            acceptanceCriterion={ac}
-                            onEdit={() => setEditingItem(ac)}
-                            onDelete={async () => {
-                                if (window.confirm('Delete this criterion?')) {
-                                    await deleteAcceptanceCriterion(ac.id);
-                                }
-                            }}
-                            onViewTestCases={() => onViewTestCases(ac.id)}
-                        />
-                    ))
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100" onClick={() => handleSort('key')}>
+                                        <div className="flex items-center gap-1">
+                                            Key
+                                            <SortIcon columnKey="key" />
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Criteria
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100" onClick={() => handleSort('risk')}>
+                                        <div className="flex items-center gap-1">
+                                            Risk
+                                            <SortIcon columnKey="risk" />
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100" onClick={() => handleSort('status')}>
+                                        <div className="flex items-center gap-1">
+                                            Status
+                                            <SortIcon columnKey="status" />
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredCriteria.map((ac) => {
+                                    const isLocked = ac.status === 'Locked';
+                                    return (
+                                        <tr key={ac.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600">
+                                                {ac.key || 'AC'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-900">
+                                                <div className="space-y-1">
+                                                    <div><span className="font-semibold text-gray-600">Given:</span> {ac.given}</div>
+                                                    <div><span className="font-semibold text-gray-600">When:</span> {ac.when}</div>
+                                                    <div><span className="font-semibold text-gray-600">Then:</span> {ac.then}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRiskColor(ac.risk)}`}>
+                                                    {ac.risk}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(ac.status)}`}>
+                                                    {ac.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end space-x-2">
+                                                    {onViewTestCases && (
+                                                        <button
+                                                            onClick={() => onViewTestCases(ac.id)}
+                                                            className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded"
+                                                            title="View Test Cases"
+                                                        >
+                                                            Test Cases
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setEditingItem(ac)}
+                                                        disabled={isLocked}
+                                                        className={`px-3 py-1 rounded ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100'}`}
+                                                        title={isLocked ? "Cannot edit locked criterion" : "Edit"}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm('Delete this criterion?')) {
+                                                                await deleteAcceptanceCriterion(ac.id);
+                                                            }
+                                                        }}
+                                                        disabled={isLocked}
+                                                        className={`px-3 py-1 rounded ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
+                                                        title={isLocked ? "Cannot delete locked criterion" : "Delete"}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </div>

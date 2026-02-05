@@ -16,6 +16,21 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// GET /api/stories/:id/export
+router.get('/:id/export', async (req, res, next) => {
+  try {
+    const data = await storyService.export(req.params.id);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="story-${data.key}-${new Date().toISOString()}.json"`);
+
+    return res.json(data);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // GET /api/stories/:id
 router.get('/:id', async (req, res, next) => {
   try {
@@ -34,6 +49,20 @@ router.get('/epic/:epicId', async (req, res, next) => {
   try {
     const stories = await storyService.getByEpicId(req.params.epicId);
     return res.json(stories);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// POST /api/stories/import
+router.post('/import', async (req, res, next) => {
+  try {
+    const { data, epic_id } = req.body;
+    if (!data || !epic_id) {
+      return res.status(400).json({ error: 'Missing data or epic_id' });
+    }
+    const story = await storyService.import(data, epic_id);
+    return res.status(201).json(story);
   } catch (error) {
     return next(error);
   }

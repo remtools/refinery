@@ -20,32 +20,33 @@ export class EpicService {
   }
 
   async generateNextKey(): Promise<string> {
-    const lastEpic = await db.get<{ key: string }>('SELECT key FROM epics WHERE key LIKE "EPIC-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
+    const lastEpic = await db.get<{ key: string }>('SELECT key FROM epics WHERE key LIKE "EP-%" ORDER BY length(key) DESC, key DESC LIMIT 1');
     if (!lastEpic) {
-      return 'EPIC-001';
+      return 'EP-01';
     }
-    const match = lastEpic.key.match(/EPIC-(\d+)/);
+    const match = lastEpic.key.match(/EP-(\d+)/);
     if (!match) {
-      return 'EPIC-001';
+      return 'EP-01';
     }
     const nextNum = parseInt(match[1]) + 1;
-    return `EPIC-${nextNum.toString().padStart(3, '0')}`;
+    return `EP-${nextNum.toString().padStart(2, '0')}`;
   }
 
   async create(data: {
     project_id?: string;
-    key: string;
+    key?: string;
     title: string;
     description: string;
     created_by: string;
   }): Promise<Epic> {
     const id = uuidv4();
     const now = new Date().toISOString();
+    const key = data.key || await this.generateNextKey();
 
     const epic: Epic = {
       id,
       project_id: data.project_id || '',
-      key: data.key,
+      key: key,
       title: data.title,
       description: data.description,
       status: 'Draft',

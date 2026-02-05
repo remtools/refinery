@@ -134,6 +134,17 @@ export const api = {
     });
   },
 
+  async importStory(data: any, epicId: string) {
+    return this.request('/stories/import', {
+      method: 'POST',
+      body: JSON.stringify({ data, epic_id: epicId }),
+    });
+  },
+
+  async exportStory(id: string) {
+    return this.request(`/stories/${id}/export`);
+  },
+
   // Acceptance Criteria
   async getAcceptanceCriteria() {
     return this.request('/acceptance-criteria');
@@ -215,6 +226,54 @@ export const api = {
   async deleteActor(id: string) {
     return this.request(`/actors/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  // Test Sets
+  async getTestSets() {
+    return this.request('/test-sets');
+  },
+
+  async getTestSet(id: string) {
+    return this.request(`/test-sets/${id}`);
+  },
+
+  async createTestSet(data: any) {
+    return this.request('/test-sets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateTestSet(id: string, data: any) {
+    return this.request(`/test-sets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteTestSet(id: string) {
+    return this.request(`/test-sets/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Test Runs
+  async getTestRunsBySet(testSetId: string) {
+    return this.request(`/test-sets/${testSetId}/runs`);
+  },
+
+  async createBulkTestRuns(testSetId: string, testCaseIds: string[]) {
+    return this.request(`/test-sets/${testSetId}/runs/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ testCaseIds }),
+    });
+  },
+
+  async updateTestRun(id: string, data: any) {
+    return this.request(`/test-runs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
   },
 };
