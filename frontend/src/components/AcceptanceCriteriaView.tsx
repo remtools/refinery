@@ -17,7 +17,7 @@ interface AcceptanceCriteriaViewProps {
 const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: AcceptanceCriteriaViewProps) => {
     const { state, dispatch } = useAppContext();
     const { selectedProjectId } = state;
-    const { stories, loading: storiesLoading } = useStories();
+    const { stories } = state; //const { stories, loading: storiesLoading } = useStories();
     const { epics, loading: epicsLoading } = useEpics();
     const {
         acceptanceCriteria,
@@ -59,7 +59,10 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
     const parentStory = storyId ? stories.find(s => s.id === storyId) : null;
     const parentEpic = parentStory ? epics.find(e => e.id === parentStory.epic_id) : null;
 
-    if (acLoading || storiesLoading || epicsLoading) return <div className="p-8 text-center text-gray-500">Loading criteria...</div>;
+    //if (acLoading || storiesLoading || epicsLoading) return <div className="p-8 text-center text-gray-500">Loading criteria...</div>;
+    if (acLoading)
+        return <div className="p-8 text-center text-gray-500">Loading criteria...</div>;
+
     const clearError = () => {
         dispatch({ type: 'SET_ERROR', entity: 'acceptanceCriteria', error: null });
     };
