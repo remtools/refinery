@@ -223,7 +223,9 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                                 await updateAcceptanceCriterion(editingItem.id, data);
                                 setEditingItem(null);
                             } else {
-                                await createAcceptanceCriterion(data);
+                                // Ensure story_id is included when creating from story context
+                                const createData = storyId ? { ...data, story_id: storyId } : data;
+                                await createAcceptanceCriterion(createData);
                                 setShowForm(false);
                             }
                         }}
