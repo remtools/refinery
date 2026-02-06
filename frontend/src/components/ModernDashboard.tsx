@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useEpics } from '../hooks/useEpics';
+import { useStatuses } from '../hooks/useStatuses';
 import { useAppContext } from '../context/AppContext';
 import ProjectsView from './ProjectsView';
 import ModernLayout from './ModernLayout';
@@ -12,11 +13,13 @@ import TestCasesView from './TestCasesView';
 import TestSetsView from './TestSetsView';
 import TestExecutionView from './TestExecutionView';
 import FilterBar from './FilterBar';
+import Modal from './Modal';
 
 const ModernDashboard = () => {
   const { state, setSelectedProjectId, dispatch } = useAppContext();
   const { selectedProjectId, projects } = state;
   const { epics, createEpic, updateEpic, deleteEpic, fetchEpics, error: epicsError } = useEpics();
+  const { statuses, activeStatuses } = useStatuses();
 
   const clearError = () => {
     dispatch({ type: 'SET_ERROR', entity: 'epics', error: null });
@@ -48,9 +51,10 @@ const ModernDashboard = () => {
 
   const filteredEpics = useMemo(() => {
     return epics.filter(e => {
-      const matchesSearch = e.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        e.key.toLowerCase().includes(filters.search.toLowerCase()) ||
-        e.description.toLowerCase().includes(filters.search.toLowerCase());
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = (e.title?.toLowerCase() || '').includes(searchLower) ||
+        (e.key?.toLowerCase() || '').includes(searchLower) ||
+        (e.description?.toLowerCase() || '').includes(searchLower);
       const matchesStatus = !filters.status || e.status === filters.status;
       return matchesSearch && matchesStatus;
     });
@@ -58,7 +62,11 @@ const ModernDashboard = () => {
 
   const handleCreateEpic = async (data: any, keepOpen?: boolean) => {
     try {
-      await createEpic(data);
+      const payload = {
+        ...data,
+        project_id: data.project_id || selectedProjectId
+      };
+      await createEpic(payload);
       if (!keepOpen) {
         setShowCreateForm(false);
       }
@@ -90,6 +98,7 @@ const ModernDashboard = () => {
         await deleteEpic(id);
       } catch (error) {
         console.error('Failed to delete epic:', error);
+        alert(`Failed to delete epic: ${(error as Error).message}`);
       }
     }
   };
@@ -273,34 +282,39 @@ const ModernDashboard = () => {
 
             <FilterBar
               placeholder="Search epics in this project..."
-              statusOptions={['Draft', 'Approved', 'Locked']}
+              statusOptions={statuses.map(s => s.key)}
               onFilterChange={setFilters}
             />
 
-            {(showCreateForm || editingEpic) && (
-              <div className="mb-8 animate-fade-in">
+            <Modal
+              isOpen={showCreateForm || !!editingEpic}
+              onClose={() => { setShowCreateForm(false); setEditingEpic(null); }}
+            >
+              {(showCreateForm || editingEpic) && (
                 <ModernForm
-                  title={editingEpic ? "Edit Epic" : "Create New Epic"}
+                  title={editingEpic ? `Edit Epic ${editingEpic.key ? `(${editingEpic.key})` : ''}` : "Create New Epic"}
                   submitButtonText={editingEpic ? "Update Epic" : "Create Epic"}
                   initialData={editingEpic || { project_id: selectedProjectId }}
                   onSubmit={editingEpic ? (data) => handleUpdateEpic(editingEpic.id, data) : handleCreateEpic}
                   onCancel={() => { setShowCreateForm(false); setEditingEpic(null); }}
                   fields={[
-                    {
+                    // Only show Project selection if we don't have a specific project selected (e.g. valid for some global Create views if they existed)
+                    // But currently we enforce strict hierarchy, so we can likely hide it if selectedProjectId is set.
+                    // If editing, we disabled it anyway or hide it.
+                    ...(!selectedProjectId ? [{
                       name: 'project_id',
                       label: 'Project',
-                      type: 'select',
+                      type: 'select' as const,
                       options: projects.map(p => ({ value: p.id, label: p.name })),
                       required: true
-                    },
-                    { name: 'key', label: 'Epic Key (e.g. REF-1)', type: 'text', required: true, disabled: !!editingEpic },
-                    { name: 'title', label: 'Epic Title', type: 'text', required: true },
+                    }] : []),
+                    { name: 'title', label: 'Epic Title', type: 'text', required: true, fullWidth: true },
                     { name: 'description', label: 'Description', type: 'textarea', required: true },
-                    { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'Approved', 'Locked'] }
+                    { name: 'status', label: 'Status', type: 'select', options: activeStatuses.map(s => ({ value: s.key, label: s.label })), required: true }
                   ]}
                 />
-              </div>
-            )}
+              )}
+            </Modal>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEpics.length === 0 ? (
@@ -333,13 +347,19 @@ const ModernDashboard = () => {
   };
 
   return (
-    <ModernLayout currentView={currentView} onNavigate={(view) => {
-      setCurrentView(view);
-      // Reset hierarchical filters when switching tabs
-      if (view === 'projects') {
-        setSelectedProjectId(null);
-      }
-    }}>
+    <ModernLayout
+      currentView={currentView}
+      onNavigate={(view) => {
+        setCurrentView(view);
+        // Reset hierarchical filters when switching tabs
+        if (view === 'projects') {
+          setSelectedProjectId(null);
+        }
+      }}
+      selectedEpicId={selectedEpicId}
+      selectedStoryId={selectedStoryId}
+      selectedAcId={selectedAcId}
+    >
       {renderContent()}
     </ModernLayout>
   );

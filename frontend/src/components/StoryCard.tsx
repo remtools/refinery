@@ -1,6 +1,7 @@
 import { Story } from '../types';
 import { useEpics } from '../hooks/useEpics';
 import { useActors } from '../hooks/useActors';
+import { useStatuses } from '../hooks/useStatuses';
 
 interface StoryCardProps {
   story: Story;
@@ -13,24 +14,12 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
   const { epics } = useEpics();
   const epic = epics.find(e => e.id === story.epic_id);
   const { actors } = useActors(epic?.project_id);
+  const { isDeletable, getStatusColor } = useStatuses();
 
   const getActorName = () => {
     if (!story.actor_id) return 'Unknown Actor';
     const actor = actors.find(a => a.id === story.actor_id);
     return actor ? actor.name : 'Unknown Actor';
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'Approved':
-        return 'bg-green-100 text-green-800';
-      case 'Locked':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
   };
 
   const getEpicTitle = () => {
@@ -73,12 +62,12 @@ const StoryCard = ({ story, onEdit, onDelete, onViewAcceptanceCriteria }: StoryC
           </button>
           <button
             onClick={onDelete}
-            disabled={isLocked}
-            className={`p-2 rounded-md ${isLocked
+            disabled={!isDeletable(story.status)}
+            className={`p-2 rounded-md ${!isDeletable(story.status)
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
               : 'bg-red-50 text-red-600 hover:bg-red-100'
               }`}
-            title={isLocked ? 'Cannot delete locked story' : 'Delete story'}
+            title={!isDeletable(story.status) ? 'Story status prevents deletion' : 'Delete story'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

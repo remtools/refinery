@@ -5,16 +5,25 @@ interface ModernLayoutProps {
   children: ReactNode;
   currentView: string;
   onNavigate: (view: string) => void;
+  selectedEpicId?: string | null;
+  selectedStoryId?: string | null;
+  selectedAcId?: string | null;
 }
 
-const ModernLayout = ({ children, currentView, onNavigate }: ModernLayoutProps) => {
+const ModernLayout = ({ children, currentView, onNavigate, selectedEpicId, selectedStoryId, selectedAcId }: ModernLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className={`${isSidebarOpen ? 'block' : 'hidden'} lg:block flex-shrink-0`}>
-        <Sidebar currentView={currentView} onNavigate={onNavigate} />
+        <Sidebar
+          currentView={currentView}
+          onNavigate={onNavigate}
+          selectedEpicId={selectedEpicId}
+          selectedStoryId={selectedStoryId}
+          selectedAcId={selectedAcId}
+        />
       </aside>
 
       {/* Main Content */}

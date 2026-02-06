@@ -106,7 +106,7 @@ router.delete('/:id', async (req, res, next) => {
     }
     return res.status(204).send();
   } catch (error) {
-    if (error.message.includes('Cannot delete story')) {
+    if (error.message.includes('Cannot delete story') || error.message.includes('Only archived stories can be deleted')) {
       return res.status(400).json({ error: error.message });
     }
     return next(error);

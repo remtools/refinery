@@ -1,8 +1,13 @@
 import { db } from '../database/index.js';
 import { AcceptanceCriterion } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { StatusService } from './Status.js';
+
+const statusService = new StatusService();
 
 export class AcceptanceCriterionService {
+  // ... (existing methods kept same until delete) ...
+
   async getAll(): Promise<AcceptanceCriterion[]> {
     return db.all<AcceptanceCriterion>('SELECT * FROM acceptance_criteria ORDER BY created_at DESC');
   }
@@ -50,7 +55,7 @@ export class AcceptanceCriterionService {
       given: data.given,
       when: data.when,
       then: data.then,
-      status: 'Draft',
+      status: 'Drafted',
       valid: 1,
       risk: data.risk,
       comments: '',
@@ -75,7 +80,7 @@ export class AcceptanceCriterionService {
     given?: string;
     when?: string;
     then?: string;
-    status?: 'Draft' | 'Approved' | 'Locked';
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
     valid?: boolean;
     risk?: 'Low' | 'Medium' | 'High';
     comments?: string;
@@ -138,12 +143,27 @@ export class AcceptanceCriterionService {
   }
 
   async delete(id: string): Promise<boolean> {
-    // Check if AC has test cases
-    const testCases = await db.all('SELECT id FROM test_cases WHERE acceptance_criterion_id = ?', [id]);
-    if (testCases.length > 0) {
-      throw new Error('Cannot delete acceptance criterion with existing test cases');
+    const ac = await this.getById(id);
+    if (!ac) return false;
+
+    // Check deletion rules based on status configuration
+    const statusConfig = await statusService.getByKey(ac.status);
+    if (!statusConfig?.is_deletable) {
+      throw new Error(`Acceptance Criteria in status '${ac.status}' cannot be deleted`);
     }
 
+    // Cascade delete: Test Cases -> Test Runs
+    // 1. Delete all TCs for this AC
+    const testCases = await db.all<{ id: string }>('SELECT id FROM test_cases WHERE acceptance_criterion_id = ?', [id]);
+
+    // 2. Cleanup orphan test runs for these test cases (if needed)
+    // Assuming TestRun links to TestCase. We should clean them up to avoid orphans.
+    await db.run('DELETE FROM test_runs WHERE test_case_id IN (SELECT id FROM test_cases WHERE acceptance_criterion_id = ?)', [id]);
+
+    // 3. Delete Test Cases
+    await db.run('DELETE FROM test_cases WHERE acceptance_criterion_id = ?', [id]);
+
+    // 4. Delete AC
     const result = await db.run('DELETE FROM acceptance_criteria WHERE id = ?', [id]);
     return (result.changes || 0) > 0;
   }

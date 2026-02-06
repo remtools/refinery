@@ -4,9 +4,12 @@ import { useAppContext } from '../context/AppContext';
 interface SidebarProps {
   currentView: string;
   onNavigate: (view: string) => void;
+  selectedEpicId?: string | null;
+  selectedStoryId?: string | null;
+  selectedAcId?: string | null;
 }
 
-const Sidebar = ({ currentView, onNavigate }: SidebarProps) => {
+const Sidebar = ({ currentView, onNavigate, selectedEpicId, selectedStoryId, selectedAcId }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { state, setSelectedProjectId } = useAppContext();
   const { projects, selectedProjectId } = state;
@@ -38,7 +41,7 @@ const Sidebar = ({ currentView, onNavigate }: SidebarProps) => {
     {
       id: 'stories',
       label: 'Stories',
-      disabled: !selectedProjectId,
+      disabled: !selectedProjectId || !selectedEpicId,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 19 7.5 19S10.832 18.477 12 17.753V6.253zM11.25 16.5h4.5M11.25 11.5h4.5M11.25 6.5h4.5" />
@@ -49,7 +52,7 @@ const Sidebar = ({ currentView, onNavigate }: SidebarProps) => {
     {
       id: 'acceptance-criteria',
       label: 'Acceptance Criteria',
-      disabled: !selectedProjectId,
+      disabled: !selectedProjectId || !selectedStoryId,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-4h1a2 2 0 012 2v1a2 2 0 01-2 2H4a2 2 0 01-2-2v-1a2 2 0 012-2h1m6-0V7a2 2 0 012-2h1a2 2 0 012 2v6" />
@@ -60,7 +63,7 @@ const Sidebar = ({ currentView, onNavigate }: SidebarProps) => {
     {
       id: 'test-cases',
       label: 'Test Cases',
-      disabled: !selectedProjectId,
+      disabled: !selectedProjectId || !selectedAcId,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.536.536a1 1 0 01-1.414 0l-4.95 4.95a2.121 2.121 0 01-1.415 0L2.586 9.95a1 1 0 010-1.415l4.95-4.95a1 1 0 011.414 0l4.95 4.95a2.121 2.121 0 011.415 0l4.95-4.95z" />

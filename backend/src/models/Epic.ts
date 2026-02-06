@@ -1,6 +1,9 @@
 import { db } from '../database/index.js';
 import { Epic } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { StatusService } from './Status.js';
+
+const statusService = new StatusService();
 
 export class EpicService {
   async getAll(): Promise<Epic[]> {
@@ -38,6 +41,7 @@ export class EpicService {
     title: string;
     description: string;
     created_by: string;
+    status?: string;
   }): Promise<Epic> {
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -49,7 +53,7 @@ export class EpicService {
       key: key,
       title: data.title,
       description: data.description,
-      status: 'Draft',
+      status: (data.status || 'Drafted') as 'Drafted' | 'Reviewed' | 'Locked' | 'Archived',
       created_at: now,
       created_by: data.created_by,
       updated_at: now,
@@ -72,7 +76,7 @@ export class EpicService {
     key?: string;
     title?: string;
     description?: string;
-    status?: 'Draft' | 'Approved' | 'Locked';
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
     updated_by: string;
   }): Promise<Epic | undefined> {
     const existing = await this.getById(id);
@@ -124,10 +128,40 @@ export class EpicService {
   }
 
   async delete(id: string): Promise<boolean> {
-    // Check if epic has stories
-    const stories = await db.all('SELECT id FROM stories WHERE epic_id = ?', [id]);
-    if (stories.length > 0) {
-      throw new Error('Cannot delete epic with existing stories');
+    const epic = await this.getById(id);
+    if (!epic) {
+      throw new Error('Epic not found');
+    }
+
+    // Check deletion rules based on status configuration
+    const statusConfig = await statusService.getByKey(epic.status);
+    if (!statusConfig?.is_deletable) {
+      throw new Error(`Epics in status '${epic.status}' cannot be deleted`);
+    }
+
+    // Cascade delete: Stories -> ACs -> TCs
+    // 1. Get all stories
+    const stories = await db.all<{ id: string }>('SELECT id FROM stories WHERE epic_id = ?', [id]);
+
+    for (const story of stories) {
+      // For each story, delete its dependencies (ACs, TCs)
+      // We replicate StoryService.delete logic here to avoid circular dependency issues with Service imports
+
+      // 1.1 Get all ACs
+      const acs = await db.all<{ id: string }>('SELECT id FROM acceptance_criteria WHERE story_id = ?', [story.id]);
+
+      for (const ac of acs) {
+        // 1.2 Delete all TCs for this AC
+        await db.run('DELETE FROM test_cases WHERE acceptance_criterion_id = ?', [ac.id]);
+        // 1.3 Cleanup orphaned Test Runs linked to these TCs
+        await db.run('DELETE FROM test_runs WHERE test_case_id IN (SELECT id FROM test_cases WHERE acceptance_criterion_id = ?)', [ac.id]);
+      }
+
+      // 1.4 Delete ACs
+      await db.run('DELETE FROM acceptance_criteria WHERE story_id = ?', [story.id]);
+
+      // 1.5 Delete Story
+      await db.run('DELETE FROM stories WHERE id = ?', [story.id]);
     }
 
     const result = await db.run('DELETE FROM epics WHERE id = ?', [id]);

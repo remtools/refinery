@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useStories } from '../hooks/useStories';
+import { useStatuses } from '../hooks/useStatuses';
 import { useEpics } from '../hooks/useEpics';
 import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
@@ -19,6 +20,7 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
   const { epics } = useEpics();
   const epic = useMemo(() => epics.find(e => e.id === epicId), [epics, epicId]);
   const { actors, fetchActors } = useActors(epic?.project_id);
+  const { getStatusColor, isDeletable } = useStatuses();
 
   useEffect(() => {
     if (epic?.project_id) {
@@ -36,15 +38,6 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
   const getActorName = (actorId: string) => {
     const actor = actors.find(a => a.id === actorId);
     return actor ? actor.name : 'Unknown';
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Draft': return 'bg-gray-100 text-gray-800';
-      case 'Approved': return 'bg-green-100 text-green-800';
-      case 'Locked': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
   };
 
   const filteredStories = useMemo(() => {
@@ -171,6 +164,9 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
     reader.readAsText(file);
   };
 
+  const handleDelete = async (storyId: string) => {
+    await deleteStory(storyId);
+  };
 
 
   return (
@@ -246,7 +242,7 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
       <FilterBar
         placeholder="Search stories in this epic..."
         onFilterChange={setFilters}
-        statusOptions={['Draft', 'Approved', 'Locked']}
+        statusOptions={['Drafted', 'Reviewed', 'Locked']}
         actorOptions={actors.map(a => ({ id: a.id, name: a.name }))}
       />
 
@@ -372,14 +368,18 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
                             Edit
                           </button>
                           <button
-                            onClick={async () => {
-                              if (window.confirm('Delete this story?')) {
-                                await deleteStory(story.id);
+                            onClick={() => {
+                              if (!isDeletable(story.status)) {
+                                alert(`Stories in status '${story.status}' cannot be deleted.`);
+                                return;
+                              }
+                              if (window.confirm('Are you sure you want to delete this story? This will also delete all associated Acceptance Criteria and Test Cases.')) {
+                                handleDelete(story.id);
                               }
                             }}
                             disabled={isLocked}
                             className={`px-3 py-1 rounded ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
-                            title={isLocked ? "Cannot delete locked story" : "Delete"}
+                            title={isLocked ? "Cannot delete locked story" : (!isDeletable(story.status) ? `Cannot delete in '${story.status}' status` : "Delete")}
                           >
                             Delete
                           </button>

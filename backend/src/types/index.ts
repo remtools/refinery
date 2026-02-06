@@ -15,7 +15,7 @@ export interface Epic {
   key: string;
   title: string;
   description: string;
-  status: 'Draft' | 'Approved' | 'Locked';
+  status: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
   created_at: string;
   created_by: string;
   updated_at: string;
@@ -29,7 +29,7 @@ export interface Story {
   actor_id: string;
   action: string;
   outcome: string;
-  status: 'Draft' | 'Approved' | 'Locked';
+  status: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
   created_at: string;
   created_by: string;
   updated_at: string;
@@ -43,7 +43,7 @@ export interface AcceptanceCriterion {
   given: string;
   when: string;
   then: string;
-  status: 'Draft' | 'Approved' | 'Locked';
+  status: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
   valid: number;
   risk: 'Low' | 'Medium' | 'High';
   comments: string;

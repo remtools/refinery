@@ -3,6 +3,8 @@ import { useTestRuns } from '../hooks/useTestRuns';
 import { useTestSets } from '../hooks/useTestSets';
 import { useTestCases } from '../hooks/useTestCases';
 import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
+import { useStories } from '../hooks/useStories';
+import { useEpics } from '../hooks/useEpics';
 
 interface TestExecutionViewProps {
     testSetId: string;
@@ -14,8 +16,12 @@ const TestExecutionView = ({ testSetId, onBack }: TestExecutionViewProps) => {
     const { testSets } = useTestSets();
     const { testCases } = useTestCases();
     const { acceptanceCriteria } = useAcceptanceCriteria();
+    const { stories } = useStories();
+    const { epics } = useEpics();
 
     const [filterStatus, setFilterStatus] = useState<string>('All');
+    const [filterEpic, setFilterEpic] = useState<string>('All');
+    const [filterStory, setFilterStory] = useState<string>('All');
     const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -26,10 +32,62 @@ const TestExecutionView = ({ testSetId, onBack }: TestExecutionViewProps) => {
 
     const testSet = useMemo(() => testSets.find(ts => ts.id === testSetId), [testSets, testSetId]);
 
+    // Get unique Epics and Stories from test runs
+    const availableEpics = useMemo(() => {
+        const epicIds = new Set<string>();
+        testRuns.forEach(run => {
+            const tc = testCases.find(t => t.id === run.test_case_id);
+            const ac = tc ? acceptanceCriteria.find(a => a.id === tc.acceptance_criterion_id) : null;
+            const story = ac ? stories.find(s => s.id === ac.story_id) : null;
+            if (story?.epic_id) epicIds.add(story.epic_id);
+        });
+        return epics.filter(e => epicIds.has(e.id));
+    }, [testRuns, testCases, acceptanceCriteria, stories, epics]);
+
+    const availableStories = useMemo(() => {
+        const storyIds = new Set<string>();
+        testRuns.forEach(run => {
+            const tc = testCases.find(t => t.id === run.test_case_id);
+            const ac = tc ? acceptanceCriteria.find(a => a.id === tc.acceptance_criterion_id) : null;
+            if (ac?.story_id) storyIds.add(ac.story_id);
+        });
+        let filteredStories = stories.filter(s => storyIds.has(s.id));
+        // If Epic filter is active, only show stories from that Epic
+        if (filterEpic !== 'All') {
+            filteredStories = filteredStories.filter(s => s.epic_id === filterEpic);
+        }
+        return filteredStories;
+    }, [testRuns, testCases, acceptanceCriteria, stories, filterEpic]);
+
     const filteredRuns = useMemo(() => {
-        if (filterStatus === 'All') return testRuns;
-        return testRuns.filter(tr => tr.status === filterStatus);
-    }, [testRuns, filterStatus]);
+        let filtered = testRuns;
+
+        // Filter by status
+        if (filterStatus !== 'All') {
+            filtered = filtered.filter(tr => tr.status === filterStatus);
+        }
+
+        // Filter by Epic
+        if (filterEpic !== 'All') {
+            filtered = filtered.filter(run => {
+                const tc = testCases.find(t => t.id === run.test_case_id);
+                const ac = tc ? acceptanceCriteria.find(a => a.id === tc.acceptance_criterion_id) : null;
+                const story = ac ? stories.find(s => s.id === ac.story_id) : null;
+                return story?.epic_id === filterEpic;
+            });
+        }
+
+        // Filter by Story
+        if (filterStory !== 'All') {
+            filtered = filtered.filter(run => {
+                const tc = testCases.find(t => t.id === run.test_case_id);
+                const ac = tc ? acceptanceCriteria.find(a => a.id === tc.acceptance_criterion_id) : null;
+                return ac?.story_id === filterStory;
+            });
+        }
+
+        return filtered;
+    }, [testRuns, filterStatus, filterEpic, filterStory, testCases, acceptanceCriteria, stories]);
 
     const stats = useMemo(() => {
         const total = testRuns.length;
@@ -93,23 +151,80 @@ const TestExecutionView = ({ testSetId, onBack }: TestExecutionViewProps) => {
                 </div>
             </div>
 
+            {/* Filter Controls */}
+            <div className="flex gap-3 mb-6 flex-wrap items-center">
+                <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Epic:</label>
+                    <select
+                        value={filterEpic}
+                        onChange={(e) => {
+                            setFilterEpic(e.target.value);
+                            setFilterStory('All'); // Reset story filter when epic changes
+                        }}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+                    >
+                        <option value="All">All Epics</option>
+                        {availableEpics.map(epic => (
+                            <option key={epic.id} value={epic.id}>
+                                {epic.key || 'EP'} - {epic.title}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Story:</label>
+                    <select
+                        value={filterStory}
+                        onChange={(e) => setFilterStory(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+                        disabled={availableStories.length === 0}
+                    >
+                        <option value="All">All Stories</option>
+                        {availableStories.map(story => (
+                            <option key={story.id} value={story.id}>
+                                {story.key || 'ST'} - {story.action.substring(0, 40)}...
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {(filterEpic !== 'All' || filterStory !== 'All' || filterStatus !== 'All') && (
+                    <button
+                        onClick={() => {
+                            setFilterEpic('All');
+                            setFilterStory('All');
+                            setFilterStatus('All');
+                        }}
+                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Clear Filters
+                    </button>
+                )}
+            </div>
+
             {/* List */}
             <div className="space-y-4">
                 {filteredRuns.map(run => {
                     const tc = testCases.find(t => t.id === run.test_case_id);
                     const ac = tc ? acceptanceCriteria.find(a => a.id === tc.acceptance_criterion_id) : null;
+                    const story = ac ? stories.find(s => s.id === ac.story_id) : null;
+                    const epic = story ? epics.find(e => e.id === story.epic_id) : null;
                     const isExpanded = expandedRunId === run.id;
 
                     return (
                         <div key={run.id} className={`bg-white rounded-xl shadow-sm border transaction-all duration-200 ${run.status === 'Pass' ? 'border-green-200' :
-                                run.status === 'Fail' ? 'border-red-200' :
-                                    'border-gray-200'
+                            run.status === 'Fail' ? 'border-red-200' :
+                                'border-gray-200'
                             }`}>
                             <div className="p-4 flex items-start gap-4 cursor-pointer" onClick={() => setExpandedRunId(isExpanded ? null : run.id)}>
                                 <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${run.status === 'Pass' ? 'bg-green-500' :
-                                        run.status === 'Fail' ? 'bg-red-500' :
-                                            run.status === 'Blocked' ? 'bg-gray-500' :
-                                                'bg-gray-200'
+                                    run.status === 'Fail' ? 'bg-red-500' :
+                                        run.status === 'Blocked' ? 'bg-gray-500' :
+                                            'bg-gray-200'
                                     }`}></div>
 
                                 <div className="flex-1">
@@ -121,7 +236,21 @@ const TestExecutionView = ({ testSetId, onBack }: TestExecutionViewProps) => {
                                                 </span>
                                                 <h3 className="font-medium text-gray-900">{tc?.steps.substring(0, 100)}...</h3>
                                             </div>
-                                            <p className="text-xs text-gray-500">AC: {ac?.key} - {ac?.given.substring(0, 50)}...</p>
+                                            <div className="text-xs text-gray-500 space-y-0.5">
+                                                {epic && (
+                                                    <p className="flex items-center gap-1">
+                                                        <span className="font-semibold">Epic:</span>
+                                                        <span className="font-mono">{epic.key}</span> - {epic.title.substring(0, 40)}...
+                                                    </p>
+                                                )}
+                                                {story && (
+                                                    <p className="flex items-center gap-1">
+                                                        <span className="font-semibold">Story:</span>
+                                                        <span className="font-mono">{story.key}</span> - {story.action.substring(0, 40)}...
+                                                    </p>
+                                                )}
+                                                <p><span className="font-semibold">AC:</span> {ac?.key} - {ac?.given.substring(0, 50)}...</p>
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {isExpanded ? (

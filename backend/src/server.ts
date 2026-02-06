@@ -15,6 +15,7 @@ import testCasesRouter from './routes/test-cases.js';
 import actorsRouter from './routes/actors.js';
 import testSetsRouter from './routes/test-sets.js';
 import testRunsRouter from './routes/test-runs.js';
+import statusesRouter from './routes/statuses.js';
 
 // Load configuration from central config file
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Prevent caching for API responses to avoid stale status/project configurations
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -48,6 +58,7 @@ app.use('/api/test-cases', testCasesRouter);
 app.use('/api/actors', actorsRouter);
 app.use('/api/test-sets', testSetsRouter);
 app.use('/api/test-runs', testRunsRouter);
+app.use('/api/statuses', statusesRouter);
 
 // Error handling middleware
 app.use(errorHandler);

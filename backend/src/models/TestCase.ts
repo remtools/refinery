@@ -118,6 +118,9 @@ export class TestCaseService {
   }
 
   async delete(id: string): Promise<boolean> {
+    // Cascade delete: Test Runs
+    await db.run('DELETE FROM test_runs WHERE test_case_id = ?', [id]);
+
     const result = await db.run('DELETE FROM test_cases WHERE id = ?', [id]);
     return (result.changes || 0) > 0;
   }

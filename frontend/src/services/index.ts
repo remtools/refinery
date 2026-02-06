@@ -1,5 +1,315 @@
-import { api } from '../utils/api';
+// import { api } from '../utils/api';
 import { type Project, type Epic, type Story, type AcceptanceCriterion, type TestCase, type Actor } from '../types';
+import { Status } from '../types/Status';
+
+const API_URL = 'http://localhost:3000/api';
+
+export const api = {
+  // Statuses
+  getStatuses: async (): Promise<Status[]> => {
+    const res = await fetch(`${API_URL}/statuses`);
+    return res.json();
+  },
+
+  getStatusesByEntity: async (entityType: string): Promise<Status[]> => {
+    const res = await fetch(`${API_URL}/statuses?entity_type=${entityType}`);
+    return res.json();
+  },
+
+  // Projects
+  getProjects: async (): Promise<Project[]> => {
+    const res = await fetch(`${API_URL}/projects`);
+    return res.json();
+  },
+
+  getProject: async (id: string): Promise<Project> => {
+    const res = await fetch(`${API_URL}/projects/${id}`);
+    return res.json();
+  },
+
+  createProject: async (data: {
+    name: string;
+    description: string;
+    status: 'Active' | 'Archived' | 'Planned';
+    created_by: string;
+  }): Promise<Project> => {
+    const res = await fetch(`${API_URL}/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateProject: async (id: string, data: {
+    name?: string;
+    description?: string;
+    status?: 'Active' | 'Archived' | 'Planned';
+    updated_by: string;
+  }): Promise<Project> => {
+    const res = await fetch(`${API_URL}/projects/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteProject: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/projects/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  importProject: async (data: any): Promise<Project> => {
+    const res = await fetch(`${API_URL}/projects/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  exportProject: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/projects/${id}/export`);
+    return res.json();
+  },
+
+  // Epics
+  getEpics: async (projectId?: string): Promise<Epic[]> => {
+    const url = projectId ? `${API_URL}/epics?project_id=${projectId}` : `${API_URL}/epics`;
+    const res = await fetch(url);
+    return res.json();
+  },
+
+  getEpic: async (id: string): Promise<Epic> => {
+    const res = await fetch(`${API_URL}/epics/${id}`);
+    return res.json();
+  },
+
+  createEpic: async (data: {
+    project_id?: string;
+    key: string;
+    title: string;
+    description: string;
+    created_by: string;
+  }): Promise<Epic> => {
+    const res = await fetch(`${API_URL}/epics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateEpic: async (id: string, data: {
+    project_id?: string;
+    key?: string;
+    title?: string;
+    description?: string;
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
+    updated_by: string;
+  }): Promise<Epic> => {
+    const res = await fetch(`${API_URL}/epics/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteEpic: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/epics/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Stories
+  getStories: async (): Promise<Story[]> => {
+    const res = await fetch(`${API_URL}/stories`);
+    return res.json();
+  },
+
+  getStoriesByEpic: async (epicId: string): Promise<Story[]> => {
+    const res = await fetch(`${API_URL}/stories?epic_id=${epicId}`);
+    return res.json();
+  },
+
+  createStory: async (data: {
+    epic_id: string;
+    actor: string;
+    action: string;
+    outcome: string;
+    created_by: string;
+  }): Promise<Story> => {
+    const res = await fetch(`${API_URL}/stories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateStory: async (id: string, data: {
+    actor?: string;
+    action?: string;
+    outcome?: string;
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
+    updated_by: string;
+  }): Promise<Story> => {
+    const res = await fetch(`${API_URL}/stories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteStory: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/stories/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Acceptance Criteria
+  getAcceptanceCriteria: async (): Promise<AcceptanceCriterion[]> => {
+    const res = await fetch(`${API_URL}/acceptance-criteria`);
+    return res.json();
+  },
+
+  getAcceptanceCriteriaByStory: async (storyId: string): Promise<AcceptanceCriterion[]> => {
+    const res = await fetch(`${API_URL}/acceptance-criteria?story_id=${storyId}`);
+    return res.json();
+  },
+
+  createAcceptanceCriterion: async (data: {
+    story_id: string;
+    given: string;
+    when: string;
+    then: string;
+    risk: 'Low' | 'Medium' | 'High';
+    created_by: string;
+  }): Promise<AcceptanceCriterion> => {
+    const res = await fetch(`${API_URL}/acceptance-criteria`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateAcceptanceCriterion: async (id: string, data: {
+    given?: string;
+    when?: string;
+    then?: string;
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
+    valid?: number;
+    risk?: 'Low' | 'Medium' | 'High';
+    comments?: string;
+    updated_by: string;
+  }): Promise<AcceptanceCriterion> => {
+    const res = await fetch(`${API_URL}/acceptance-criteria/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteAcceptanceCriterion: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/acceptance-criteria/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Test Cases
+  getTestCases: async (): Promise<TestCase[]> => {
+    const res = await fetch(`${API_URL}/test-cases`);
+    return res.json();
+  },
+
+  getTestCasesByAcceptanceCriterion: async (acId: string): Promise<TestCase[]> => {
+    const res = await fetch(`${API_URL}/test-cases?acceptance_criterion_id=${acId}`);
+    return res.json();
+  },
+
+  createTestCase: async (data: {
+    acceptance_criterion_id: string;
+    preconditions: string;
+    steps: string;
+    expected_result: string;
+    priority: 'Low' | 'Medium' | 'High';
+    created_by: string;
+  }): Promise<TestCase> => {
+    const res = await fetch(`${API_URL}/test-cases`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateTestCase: async (id: string, data: {
+    preconditions?: string;
+    steps?: string;
+    expected_result?: string;
+    priority?: 'Low' | 'Medium' | 'High';
+    test_status?: 'Not Run' | 'Pass' | 'Fail' | 'Blocked';
+    updated_by: string;
+  }): Promise<TestCase> => {
+    const res = await fetch(`${API_URL}/test-cases/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteTestCase: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/test-cases/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Actors
+  getActors: async (projectId?: string): Promise<Actor[]> => {
+    const url = projectId ? `${API_URL}/actors?project_id=${projectId}` : `${API_URL}/actors`;
+    const res = await fetch(url);
+    return res.json();
+  },
+
+  createActor: async (data: {
+    project_id: string;
+    name: string;
+  }): Promise<Actor> => {
+    const res = await fetch(`${API_URL}/actors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateActor: async (id: string, data: {
+    project_id?: string;
+    name?: string;
+    description?: string;
+    updated_by: string;
+  }): Promise<Actor> => {
+    const res = await fetch(`${API_URL}/actors/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteActor: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/actors/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
 
 // Project services
 export const projectService = {
@@ -68,7 +378,7 @@ export const epicService = {
     key?: string;
     title?: string;
     description?: string;
-    status?: 'Draft' | 'Approved' | 'Locked';
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
     updated_by: string;
   }): Promise<Epic> {
     return api.updateEpic(id, data);
@@ -103,7 +413,7 @@ export const storyService = {
     actor?: string;
     action?: string;
     outcome?: string;
-    status?: 'Draft' | 'Approved' | 'Locked';
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
     updated_by: string;
   }): Promise<Story> {
     return api.updateStory(id, data);
@@ -139,7 +449,7 @@ export const acceptanceCriterionService = {
     given?: string;
     when?: string;
     then?: string;
-    status?: 'Draft' | 'Approved' | 'Locked';
+    status?: 'Drafted' | 'Reviewed' | 'Locked' | 'Archived';
     valid?: number;
     risk?: 'Low' | 'Medium' | 'High';
     comments?: string;

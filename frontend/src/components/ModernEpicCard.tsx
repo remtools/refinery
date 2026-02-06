@@ -1,4 +1,5 @@
 import { Epic } from '../types';
+import { useStatuses } from '../hooks/useStatuses';
 
 interface ModernEpicCardProps {
   epic: Epic;
@@ -8,18 +9,9 @@ interface ModernEpicCardProps {
 }
 
 const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCardProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-      case 'Approved':
-        return 'bg-success-50 text-success-700 border-success-200';
-      case 'Locked':
-        return 'bg-error-50 text-error-700 border-error-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
+  const { isDeletable, getStatusColor } = useStatuses('Epic');
+  const isLocked = epic.status === 'Locked';
+  const createdDate = new Date(epic.created_at);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -46,17 +38,13 @@ const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCar
     }
   };
 
-  const isLocked = epic.status === 'Locked';
-  const createdDate = new Date(epic.created_at);
-  const updatedDate = new Date(epic.updated_at);
 
-  const viewButtonProps = "p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200";
   const editButtonProps = isLocked
     ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg"
     : "p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200";
-  const deleteButtonProps = isLocked
-    ? "p-2 text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg"
-    : "p-2 text-gray-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200";
+  const deleteButtonProps = isDeletable(epic.status)
+    ? "p-2 text-gray-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200"
+    : "p-2 text-gray-300 cursor-not-allowed bg-gray-50 rounded-lg";
 
   return (
     <div className="bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all duration-300 border border-gray-200 overflow-hidden hover-lift">
@@ -86,9 +74,9 @@ const ModernEpicCard = ({ epic, onEdit, onDelete, onViewStories }: ModernEpicCar
             </button>
             <button
               onClick={onDelete}
-              disabled={isLocked}
+              disabled={!isDeletable(epic.status)}
               className={deleteButtonProps}
-              title={isLocked ? 'Cannot delete locked epic' : 'Delete epic'}
+              title={!isDeletable(epic.status) ? 'Epic status prevents deletion' : 'Delete epic'}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

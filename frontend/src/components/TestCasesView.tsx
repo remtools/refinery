@@ -133,7 +133,7 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                                                 title={epic.title}
                                                 onClick={() => onNavigate?.('stories', epic.id)}
                                             >
-                                                {epic.key || 'EPIC'}
+                                                {epic.key || 'EP'}
                                             </span>
                                             <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10 animate-fade-in">
                                                 <div className="font-bold mb-1">{epic.title}</div>

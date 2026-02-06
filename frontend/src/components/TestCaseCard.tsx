@@ -26,21 +26,6 @@ const TestCaseCard = ({ testCase, onEdit, onDelete }: TestCaseCardProps) => {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Pass':
-                return 'bg-green-100 text-green-800';
-            case 'Fail':
-                return 'bg-red-100 text-red-800';
-            case 'Blocked':
-                return 'bg-orange-100 text-orange-800';
-            case 'Not Run':
-                return 'bg-gray-100 text-gray-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
     const getAcTitle = () => {
         const ac = acceptanceCriteria.find(a => a.id === testCase.acceptance_criterion_id);
         return ac ? `Given ${ac.given.substring(0, 50)}...` : 'Unknown Acceptance Criterion';
@@ -56,9 +41,6 @@ const TestCaseCard = ({ testCase, onEdit, onDelete }: TestCaseCardProps) => {
                         </span>
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityColor(testCase.priority)}`}>
                             {testCase.priority}
-                        </span>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(testCase.test_status)}`}>
-                            {testCase.test_status}
                         </span>
                     </div>
                     <h3 className="text-sm text-blue-600 font-medium mb-2">{getAcTitle()}</h3>

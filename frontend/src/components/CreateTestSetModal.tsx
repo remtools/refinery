@@ -214,8 +214,8 @@ const CreateTestSetModal = ({ onClose, onCreate }: CreateTestSetModalProps) => {
                                                     onChange={(e) => setStoryStatusFilter(e.target.value)}
                                                 >
                                                     <option value="All">All Statuses</option>
-                                                    <option value="Draft">Draft</option>
-                                                    <option value="Approved">Approved</option>
+                                                    <option value="Drafted">Drafted</option>
+                                                    <option value="Reviewed">Reviewed</option>
                                                     <option value="Locked">Locked</option>
                                                 </select>
                                             </div>
@@ -255,7 +255,7 @@ const CreateTestSetModal = ({ onClose, onCreate }: CreateTestSetModalProps) => {
                                                                         <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]" title={s.action}>{s.action}</div>
                                                                     </td>
                                                                     <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${s.status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                                        <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${s.status === 'Reviewed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                                                                             {s.status}
                                                                         </span>
                                                                     </td>

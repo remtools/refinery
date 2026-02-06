@@ -14,6 +14,20 @@ const seedData = async () => {
   await db.run('DELETE FROM actors');
   await db.run('DELETE FROM projects');
 
+  // Statuses
+  console.log('Inserting Statuses...');
+  const statuses = [
+    { key: 'Drafted', label: 'Drafted', entity_type: 'Global', color: 'bg-gray-100 text-gray-800', is_deletable: 1, is_archived: 0, is_default: 1, rank: 1 },
+    { key: 'Reviewed', label: 'Reviewed', entity_type: 'Global', color: 'bg-green-100 text-green-800', is_deletable: 0, is_archived: 0, is_default: 0, rank: 2 },
+    { key: 'Locked', label: 'Locked', entity_type: 'Global', color: 'bg-red-100 text-red-800', is_deletable: 0, is_archived: 0, is_default: 0, rank: 3 },
+    { key: 'Archived', label: 'Archived', entity_type: 'Global', color: 'bg-yellow-100 text-yellow-800', is_deletable: 0, is_archived: 0, is_default: 0, rank: 4 }
+  ];
+
+  for (const s of statuses) {
+    await db.run('INSERT INTO statuses (key, label, entity_type, color, is_deletable, is_archived, is_default, rank) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [s.key, s.label, s.entity_type, s.color, s.is_deletable, s.is_archived, s.is_default, s.rank]);
+  }
+
   // Sample Project
   const projectId = uuidv4();
   console.log('Inserting Project...');
@@ -96,7 +110,7 @@ const seedData = async () => {
     'EPIC-001',
     'User Authentication System',
     'Implement secure user authentication and authorization system with login, registration, and password management features.',
-    'Draft',
+    'Drafted',
     now,
     'system',
     now,
@@ -112,7 +126,7 @@ const seedData = async () => {
     'EPIC-002',
     'Shopping Cart Management',
     'Enable users to add, remove, and manage items in their shopping cart.',
-    'Draft',
+    'Drafted',
     now,
     'system',
     now,
@@ -136,7 +150,7 @@ const seedData = async () => {
     customerActorId,
     'log in with valid credentials',
     'be successfully authenticated and redirected to dashboard',
-    'Draft',
+    'Drafted',
     now,
     'system',
     now,
@@ -154,7 +168,7 @@ const seedData = async () => {
     guestActorId,
     'register for a new account',
     'create an account and receive a confirmation email',
-    'Draft',
+    'Drafted',
     now,
     'system',
     now,
@@ -172,7 +186,7 @@ const seedData = async () => {
     customerActorId,
     'add items to my shopping cart',
     'save items for later purchase',
-    'Draft',
+    'Drafted',
     now,
     'system',
     now,
@@ -194,7 +208,7 @@ const seedData = async () => {
     'I am a registered user with valid credentials',
     'I enter my username and password and click login',
     'I am authenticated successfully and redirected to my dashboard',
-    'Draft',
+    'Drafted',
     1,
     'Medium',
     '',
@@ -214,7 +228,7 @@ const seedData = async () => {
     'I am a guest user on the registration page',
     'I fill in all required fields and submit the form',
     'my account is created and I receive a confirmation email',
-    'Draft',
+    'Drafted',
     1,
     'High',
     'Email verification is critical for security',

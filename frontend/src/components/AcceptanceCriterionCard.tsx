@@ -1,4 +1,5 @@
 import { AcceptanceCriterion } from '../types';
+import { useStatuses } from '../hooks/useStatuses';
 
 interface AcceptanceCriterionCardProps {
   acceptanceCriterion: AcceptanceCriterion;
@@ -13,19 +14,9 @@ const AcceptanceCriterionCard = ({
   onDelete,
   onViewTestCases
 }: AcceptanceCriterionCardProps) => {
+  const { isDeletable, getStatusColor } = useStatuses();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'Approved':
-        return 'bg-green-100 text-green-800';
-      case 'Locked':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // getStatusColor removed from here as it comes from hook
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -81,12 +72,12 @@ const AcceptanceCriterionCard = ({
           </button>
           <button
             onClick={onDelete}
-            disabled={isLocked}
-            className={`p-2 rounded-md ${isLocked
+            disabled={!isDeletable(acceptanceCriterion.status)}
+            className={`p-2 rounded-md ${!isDeletable(acceptanceCriterion.status)
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
               : 'bg-red-50 text-red-600 hover:bg-red-100'
               }`}
-            title={isLocked ? 'Cannot delete locked acceptance criterion' : 'Delete acceptance criterion'}
+            title={!isDeletable(acceptanceCriterion.status) ? 'Status prevents deletion' : 'Delete acceptance criterion'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

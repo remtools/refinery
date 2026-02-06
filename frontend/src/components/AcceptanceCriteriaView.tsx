@@ -3,6 +3,7 @@ import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
 import { useActors } from '../hooks/useActors';
+import { useStatuses } from '../hooks/useStatuses';
 import { useAppContext } from '../context/AppContext';
 import AcceptanceCriterionForm from './AcceptanceCriterionForm';
 import FilterBar from './FilterBar';
@@ -16,9 +17,9 @@ interface AcceptanceCriteriaViewProps {
 
 const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: AcceptanceCriteriaViewProps) => {
     const { state, dispatch } = useAppContext();
-    const { selectedProjectId } = state;
-    const { stories } = state; //const { stories, loading: storiesLoading } = useStories();
-    const { epics, loading: epicsLoading } = useEpics();
+    const { selectedProjectId, stories } = state;
+    const { epics } = useEpics();
+    const { statuses, isDeletable, getStatusColor } = useStatuses();
     const {
         acceptanceCriteria,
         loading: acLoading,
@@ -34,14 +35,7 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
     const [filters, setFilters] = useState({ search: '', status: '', risk: '' });
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Draft': return 'bg-gray-100 text-gray-800';
-            case 'Approved': return 'bg-green-100 text-green-800';
-            case 'Locked': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
+    // getStatusColor provided by useStatuses hook
 
     const getRiskColor = (risk: string) => {
         switch (risk) {
@@ -210,7 +204,7 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
 
             <FilterBar
                 placeholder="Search criteria..."
-                statusOptions={['Draft', 'Approved', 'Locked']}
+                statusOptions={['Drafted', 'Reviewed', 'Locked']}
                 riskOptions={['Low', 'Medium', 'High']}
                 onFilterChange={setFilters}
             />
@@ -321,13 +315,21 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                                                     </button>
                                                     <button
                                                         onClick={async () => {
-                                                            if (window.confirm('Delete this criterion?')) {
-                                                                await deleteAcceptanceCriterion(ac.id);
+                                                            if (!isDeletable(ac.status)) {
+                                                                alert('This status cannot be deleted.');
+                                                                return;
+                                                            }
+                                                            if (window.confirm('Delete this criterion? This will also delete all associated Test Cases.')) {
+                                                                try {
+                                                                    await deleteAcceptanceCriterion(ac.id);
+                                                                } catch (e) {
+                                                                    alert((e as Error).message);
+                                                                }
                                                             }
                                                         }}
-                                                        disabled={isLocked}
-                                                        className={`px-3 py-1 rounded ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
-                                                        title={isLocked ? "Cannot delete locked criterion" : "Delete"}
+                                                        disabled={!isDeletable(ac.status)}
+                                                        className={`px-3 py-1 rounded ${!isDeletable(ac.status) ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
+                                                        title={!isDeletable(ac.status) ? "Status prevents deletion" : "Delete"}
                                                     >
                                                         Delete
                                                     </button>

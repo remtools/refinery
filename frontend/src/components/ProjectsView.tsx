@@ -37,7 +37,7 @@ const ProjectEditTabs = ({ project, onUpdate }: { project: any, onUpdate: (data:
             </div>
 
             <div className="flex-1">
-                {activeTab === 'general' ? (
+                <div className={activeTab === 'general' ? 'block h-full' : 'hidden'}>
                     <ModernForm
                         title=""
                         submitButtonText="Update Project"
@@ -45,16 +45,17 @@ const ProjectEditTabs = ({ project, onUpdate }: { project: any, onUpdate: (data:
                         onSubmit={onUpdate}
                         onCancel={() => { }} // Hidden cancel in tabs
                         hideCancel={true}
-                        className="shadow-none border-0 p-0"
+                        className="shadow-none border-0 p-0 h-full"
                         fields={[
                             { name: 'name', label: 'Project Name', type: 'text', required: true },
                             { name: 'description', label: 'Description', type: 'textarea', required: true },
                             { name: 'status', label: 'Status', type: 'select', options: ['Planned', 'Active', 'Archived'] }
                         ]}
                     />
-                ) : (
+                </div>
+                <div className={activeTab === 'actors' ? 'block h-full' : 'hidden'}>
                     <ActorsListView projectId={project.id} isEmbedded={true} />
-                )}
+                </div>
             </div>
         </div>
     );

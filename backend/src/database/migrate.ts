@@ -3,6 +3,21 @@ import { db } from './index.js';
 const createTables = async () => {
   console.log('Creating database tables...');
 
+  // Statuses table
+  console.log('Creating statuses table...');
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS statuses (
+      key TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      color TEXT NOT NULL,
+      is_deletable INTEGER NOT NULL DEFAULT 0,
+      is_archived INTEGER NOT NULL DEFAULT 0,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      rank INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
   // Projects table
   console.log('Creating projects table...');
   await db.run(`
@@ -26,7 +41,7 @@ const createTables = async () => {
       key TEXT UNIQUE NOT NULL,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      status TEXT NOT NULL REFERENCES statuses(key),
       created_at TEXT NOT NULL,
       created_by TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -52,11 +67,12 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS stories (
       id TEXT PRIMARY KEY,
       epic_id TEXT NOT NULL,
+      key TEXT NOT NULL,
       actor TEXT,
       actor_id TEXT,
       action TEXT NOT NULL,
       outcome TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      status TEXT NOT NULL REFERENCES statuses(key),
       created_at TEXT NOT NULL,
       created_by TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -94,10 +110,11 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS acceptance_criteria (
       id TEXT PRIMARY KEY,
       story_id TEXT NOT NULL,
+      key TEXT NOT NULL,
       given TEXT NOT NULL,
       "when" TEXT NOT NULL,
       "then" TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status IN ('Draft', 'Approved', 'Locked')),
+      status TEXT NOT NULL REFERENCES statuses(key),
       valid INTEGER NOT NULL DEFAULT 1,
       risk TEXT NOT NULL CHECK (risk IN ('Low', 'Medium', 'High')),
       comments TEXT DEFAULT '',
@@ -114,6 +131,7 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS test_cases (
       id TEXT PRIMARY KEY,
       acceptance_criterion_id TEXT NOT NULL,
+      key TEXT,
       preconditions TEXT NOT NULL,
       steps TEXT NOT NULL,
       expected_result TEXT NOT NULL,

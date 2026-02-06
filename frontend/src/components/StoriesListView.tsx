@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStories } from '../hooks/useStories';
 import { useEpics } from '../hooks/useEpics';
 import { useActors } from '../hooks/useActors';
+import { useStatuses } from '../hooks/useStatuses';
 import { useAppContext } from '../context/AppContext';
 import { api } from '../utils/api';
 import StoryForm from './StoryForm';
@@ -18,20 +19,14 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
     const { stories, loading: storiesLoading, error: storiesError, createStory, updateStory, deleteStory } = useStories();
     const { epics, loading: epicsLoading } = useEpics();
     const { actors } = useActors(selectedProjectId || undefined);
+    const { isDeletable, getStatusColor } = useStatuses();
 
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingStory, setEditingStory] = useState<any>(null);
     const [filters, setFilters] = useState({ search: '', status: '', actor: '', risk: '' });
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Draft': return 'bg-gray-100 text-gray-800';
-            case 'Approved': return 'bg-green-100 text-green-800';
-            case 'Locked': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
+
 
     const sortedStories = useMemo(() => {
         // First filter by project and search criteria (existing logic)
@@ -65,6 +60,10 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                     case 'actor':
                         aValue = actors.find(act => act.id === a.actor_id)?.name || '';
                         bValue = actors.find(act => act.id === b.actor_id)?.name || '';
+                        break;
+                    case 'epic':
+                        aValue = epics.find(e => e.id === a.epic_id)?.title || '';
+                        bValue = epics.find(e => e.id === b.epic_id)?.title || '';
                         break;
                     case 'story':
                         aValue = a.action;
@@ -158,7 +157,7 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
             <FilterBar
                 placeholder="Search stories..."
                 onFilterChange={setFilters}
-                statusOptions={['Draft', 'Approved', 'Locked']}
+                statusOptions={['Drafted', 'Reviewed', 'Locked']}
                 actorOptions={actors.map(a => ({ id: a.id, name: a.name }))}
             />
 
@@ -213,6 +212,12 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                                             <SortIcon columnKey="key" />
                                         </div>
                                     </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100" onClick={() => handleSort('epic')}>
+                                        <div className="flex items-center gap-1">
+                                            Epic
+                                            <SortIcon columnKey="epic" />
+                                        </div>
+                                    </th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100" onClick={() => handleSort('actor')}>
                                         <div className="flex items-center gap-1">
                                             Actor
@@ -240,10 +245,24 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                                 {sortedStories.map((story) => {
                                     const isLocked = story.status === 'Locked';
                                     const actorName = actors.find(a => a.id === story.actor_id)?.name || 'Unknown';
+                                    const epic = epics.find(e => e.id === story.epic_id);
                                     return (
                                         <tr key={story.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600">
                                                 {story.key || 'STORY'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {epic && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">
+                                                            {epic.key || 'EP'}
+                                                        </span>
+                                                        <span className="max-w-xs truncate" title={epic.title}>
+                                                            {epic.title}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {!epic && <span className="text-gray-400 italic">No Epic</span>}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                 {actorName}
@@ -302,14 +321,18 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                                                         Edit
                                                     </button>
                                                     <button
-                                                        onClick={async () => {
-                                                            if (window.confirm('Delete this story?')) {
-                                                                await deleteStory(story.id);
+                                                        onClick={() => {
+                                                            if (!isDeletable(story.status)) {
+                                                                alert("This story status cannot be deleted.");
+                                                                return;
+                                                            }
+                                                            if (window.confirm('Are you sure you want to delete this story? This will also delete all associated Acceptance Criteria and Test Cases.')) {
+                                                                deleteStory(story.id);
                                                             }
                                                         }}
-                                                        disabled={isLocked}
-                                                        className={`px-3 py-1 rounded ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
-                                                        title={isLocked ? "Cannot delete locked story" : "Delete"}
+                                                        disabled={!isDeletable(story.status)}
+                                                        className={`px-3 py-1 rounded ${!isDeletable(story.status) ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100'}`}
+                                                        title={!isDeletable(story.status) ? "This status cannot be deleted" : "Delete"}
                                                     >
                                                         Delete
                                                     </button>

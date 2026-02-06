@@ -88,15 +88,13 @@ router.put('/:id', validate(updateEpicSchema), async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const success = await epicService.delete(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: 'Epic not found' });
+    if (success) {
+      res.status(204).send();
+    } else {
+      res.status(404).json({ error: 'Epic not found' });
     }
-    return res.status(204).send();
   } catch (error) {
-    if (error.message.includes('Cannot delete epic')) {
-      return res.status(400).json({ error: error.message });
-    }
-    return next(error);
+    res.status(400).json({ error: (error as Error).message });
   }
 });
 
