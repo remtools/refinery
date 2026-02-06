@@ -8,6 +8,7 @@ interface FormField {
   options?: (string | { value: string; label: string })[];
   placeholder?: string;
   disabled?: boolean;
+  fullWidth?: boolean;
 }
 
 interface ModernFormProps {
@@ -104,7 +105,7 @@ const ModernForm = ({ onSubmit, initialData, title, submitButtonText, onCancel, 
       } ${field.disabled ? 'bg-gray-50 cursor-not-allowed' : ''}`;
 
     return (
-      <div key={field.name} className={field.type === 'textarea' ? 'col-span-full' : ''}>
+      <div key={field.name} className={field.type === 'textarea' || field.fullWidth ? 'col-span-full' : ''}>
         <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-2">
           {field.label}
           {field.required && <span className="text-error-500 ml-1">*</span>}

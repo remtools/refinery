@@ -32,16 +32,6 @@ const StoryForm = ({ onSubmit, initialData, epicId, onCancel }: StoryFormProps) 
       required: true
     },
     {
-      name: 'actor_id',
-      label: 'Actor (As a...)',
-      type: 'select' as const,
-      required: true,
-      options: actors.map(a => ({ value: a.id, label: a.name })),
-      placeholder: 'Select an actor...'
-    },
-    { name: 'action', label: 'Action (I want to...)', type: 'text' as const, required: true, placeholder: 'e.g. log in' },
-    { name: 'outcome', label: 'Outcome (So that...)', type: 'textarea' as const, required: true, placeholder: 'e.g. I can access my dashboard' },
-    {
       name: 'status',
       label: 'Status',
       type: 'select' as const,
@@ -52,13 +42,23 @@ const StoryForm = ({ onSubmit, initialData, epicId, onCancel }: StoryFormProps) 
         { value: 'Locked', label: 'Locked' }
       ]
     },
+    {
+      name: 'actor_id',
+      label: 'Actor (As a...)',
+      type: 'select' as const,
+      required: true,
+      options: actors.map(a => ({ value: a.id, label: a.name })),
+      placeholder: 'Select an actor...'
+    },
+    { name: 'action', label: 'Action (I want to...)', type: 'textarea' as const, required: true, placeholder: 'e.g. log in' },
+    { name: 'outcome', label: 'Outcome (So that...)', type: 'textarea' as const, required: true, placeholder: 'e.g. I can access my dashboard' },
   ];
 
   return (
     <ModernForm
       title={initialData ? "Edit Story" : "Create New Story"}
       submitButtonText={initialData ? "Update Story" : "Create Story"}
-      initialData={initialData || { epic_id: epicId }}
+      initialData={initialData || { epic_id: epicId, status: 'Draft' }}
       onSubmit={onSubmit}
       onCancel={onCancel}
       fields={fields}

@@ -6,6 +6,7 @@ import { useActors } from '../hooks/useActors';
 import { useAppContext } from '../context/AppContext';
 import AcceptanceCriterionForm from './AcceptanceCriterionForm';
 import FilterBar from './FilterBar';
+import Modal from './Modal';
 
 interface AcceptanceCriteriaViewProps {
     storyId?: string;
@@ -214,19 +215,11 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                 onFilterChange={setFilters}
             />
 
-            {(showForm || editingItem) && (
-                <div className="mb-8 animate-fade-in">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            {editingItem ? 'Edit Criterion' : 'Create New Criterion'}
-                        </h2>
-                        <button
-                            onClick={() => { setShowForm(false); setEditingItem(null); }}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            Cancel
-                        </button>
-                    </div>
+            <Modal
+                isOpen={showForm || !!editingItem}
+                onClose={() => { setShowForm(false); setEditingItem(null); }}
+            >
+                {(showForm || editingItem) && (
                     <AcceptanceCriterionForm
                         storyId={storyId}
                         initialData={editingItem}
@@ -241,8 +234,8 @@ const AcceptanceCriteriaView = ({ storyId, onBack, onViewTestCases }: Acceptance
                             }
                         }}
                     />
-                </div>
-            )}
+                )}
+            </Modal>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {filteredCriteria.length === 0 ? (

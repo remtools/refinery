@@ -26,7 +26,8 @@ const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: A
       label: 'Parent Story',
       type: 'select' as const,
       options: stories.map(s => ({ value: s.id, label: `${s.key || 'STORY'} - As a ${getActorName(s.actor_id)}, I want to ${s.action}` })),
-      required: true
+      required: true,
+      fullWidth: true
     },
     { name: 'given', label: 'Given', type: 'textarea' as const, required: true, placeholder: 'Initial context' },
     { name: 'when', label: 'When', type: 'textarea' as const, required: true, placeholder: 'Action/Event' },
@@ -42,7 +43,7 @@ const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: A
 
   return (
     <ModernForm
-      title=""
+      title={initialData ? "Edit Criterion" : "Create New Criterion"}
       submitButtonText={initialData ? "Update Criterion" : "Create Criterion"}
       initialData={initialData || { story_id: storyId, risk: 'Medium' }}
       onSubmit={onSubmit}

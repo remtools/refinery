@@ -8,6 +8,7 @@ import { useAppContext } from '../context/AppContext';
 import TestCaseCard from './TestCaseCard';
 import TestCaseForm from './TestCaseForm';
 import FilterBar from './FilterBar';
+import Modal from './Modal';
 
 interface TestCasesViewProps {
     acceptanceCriterionId?: string;
@@ -256,18 +257,19 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
                 onFilterChange={setFilters}
             />
 
-            {
-                (showForm || editingItem) && (
-                    <div className="mb-8 animate-fade-in">
-                        <TestCaseForm
-                            acceptanceCriterionId={acceptanceCriterionId}
-                            initialData={editingItem}
-                            onCancel={() => { setShowForm(false); setEditingItem(null); }}
-                            onSubmit={editingItem ? handleUpdate : handleCreate}
-                        />
-                    </div>
-                )
-            }
+            <Modal
+                isOpen={showForm || !!editingItem}
+                onClose={() => { setShowForm(false); setEditingItem(null); }}
+            >
+                {(showForm || editingItem) && (
+                    <TestCaseForm
+                        acceptanceCriterionId={acceptanceCriterionId}
+                        initialData={editingItem}
+                        onCancel={() => { setShowForm(false); setEditingItem(null); }}
+                        onSubmit={editingItem ? handleUpdate : handleCreate}
+                    />
+                )}
+            </Modal>
 
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
                 {filteredTestCases.length === 0 ? (

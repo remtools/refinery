@@ -6,6 +6,7 @@ import { useAppContext } from '../context/AppContext';
 import { api } from '../utils/api';
 import StoryForm from './StoryForm';
 import FilterBar from './FilterBar';
+import Modal from './Modal';
 
 interface StoriesListViewProps {
     onViewAcceptanceCriteria: (storyId: string) => void;
@@ -161,19 +162,11 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                 actorOptions={actors.map(a => ({ id: a.id, name: a.name }))}
             />
 
-            {(showCreateForm || editingStory) && (
-                <div className="mb-8 animate-fade-in">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            {editingStory ? 'Edit Story' : 'Create New Story'}
-                        </h2>
-                        <button
-                            onClick={() => { setShowCreateForm(false); setEditingStory(null); }}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            Cancel
-                        </button>
-                    </div>
+            <Modal
+                isOpen={showCreateForm || !!editingStory}
+                onClose={() => { setShowCreateForm(false); setEditingStory(null); }}
+            >
+                {(showCreateForm || editingStory) && (
                     <StoryForm
                         onSubmit={async (data, keepOpen) => {
                             if (editingStory) {
@@ -197,8 +190,8 @@ const StoriesListView = ({ onViewAcceptanceCriteria }: StoriesListViewProps) => 
                         initialData={editingStory}
                         onCancel={() => { setShowCreateForm(false); setEditingStory(null); }}
                     />
-                </div>
-            )}
+                )}
+            </Modal>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {sortedStories.length === 0 ? (

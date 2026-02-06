@@ -6,6 +6,7 @@ import { useAppContext } from '../context/AppContext';
 import { api } from '../utils/api';
 import StoryForm from './StoryForm';
 import FilterBar from './FilterBar';
+import Modal from './Modal';
 
 interface StoriesViewProps {
   epicId: string;
@@ -249,16 +250,19 @@ const StoriesView = ({ epicId, onBack, onViewAcceptanceCriteria }: StoriesViewPr
         actorOptions={actors.map(a => ({ id: a.id, name: a.name }))}
       />
 
-      {(showCreateForm || editingStory) && (
-        <div className="mb-8 animate-fade-in">
+      <Modal
+        isOpen={showCreateForm || !!editingStory}
+        onClose={() => { setShowCreateForm(false); setEditingStory(null); }}
+      >
+        {(showCreateForm || editingStory) && (
           <StoryForm
             onSubmit={editingStory ? (data) => handleUpdateStory(editingStory.id, data) : handleCreateStory}
             initialData={editingStory}
             epicId={epicId}
             onCancel={() => { setShowCreateForm(false); setEditingStory(null); }}
           />
-        </div>
-      )}
+        )}
+      </Modal>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {filteredStories.length === 0 ? (

@@ -147,7 +147,9 @@ export class StoryService {
     const story = await this.getById(id);
     if (!story) throw new Error('Story not found');
 
-    const actor = await db.get('SELECT * FROM actors WHERE id = ?', [story.actor_id]);
+    const actor = await db.get<{ name: string }>('SELECT * FROM actors WHERE id = ?', [story.actor_id]);
+    if (!actor) throw new Error('Actor not found');
+
     const acceptanceCriteria = await db.all('SELECT * FROM acceptance_criteria WHERE story_id = ?', [id]);
 
     for (const ac of acceptanceCriteria as any[]) {
@@ -155,9 +157,21 @@ export class StoryService {
     }
 
     return {
-      ...story,
-      actor,
-      acceptanceCriteria
+      actor: actor.name,
+      action: story.action,
+      outcome: story.outcome,
+      acceptanceCriteria: acceptanceCriteria.map((ac: any) => ({
+        given: ac.given,
+        when: ac.when,
+        then: ac.then,
+        risk: ac.risk,
+        testCases: (ac.testCases || []).map((tc: any) => ({
+          preconditions: tc.preconditions,
+          steps: tc.steps,
+          expected_result: tc.expected_result,
+          priority: tc.priority
+        }))
+      }))
     };
   }
 
