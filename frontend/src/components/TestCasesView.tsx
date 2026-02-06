@@ -66,7 +66,11 @@ const TestCasesView = ({ acceptanceCriterionId, onBack, onNavigate }: TestCasesV
         , [actors, parentStory]);
 
     const handleCreate = async (data: any) => {
-        await createTestCase({ ...data, created_by: 'user' });
+        // Ensure acceptance_criterion_id is included when creating from AC context
+        const createData = acceptanceCriterionId
+            ? { ...data, acceptance_criterion_id: acceptanceCriterionId, created_by: 'user' }
+            : { ...data, created_by: 'user' };
+        await createTestCase(createData);
         setShowForm(false);
     };
 
