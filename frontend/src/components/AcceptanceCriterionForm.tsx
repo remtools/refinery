@@ -36,6 +36,12 @@ const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: A
     { name: 'when', label: 'When', type: 'textarea' as const, required: true, placeholder: 'Action/Event' },
     { name: 'then', label: 'Then', type: 'textarea' as const, required: true, placeholder: 'Expected outcome' },
     {
+      name: 'status',
+      label: 'Status',
+      type: 'select' as const,
+      options: ['Drafted', 'Reviewed', 'Locked', 'Archived']
+    },
+    {
       name: 'risk',
       label: 'Risk Level',
       type: 'select' as const,
@@ -64,7 +70,7 @@ const AcceptanceCriterionForm = ({ onSubmit, initialData, storyId, onCancel }: A
       <ModernForm
         title={initialData ? "Edit Criterion" : "Create New Criterion"}
         submitButtonText={initialData ? "Update Criterion" : "Create Criterion"}
-        initialData={initialData || { story_id: storyId, risk: 'Medium' }}
+        initialData={initialData || { story_id: storyId, risk: 'Medium', status: 'Drafted' }}
         onSubmit={onSubmit}
         onCancel={onCancel}
         fields={fields}

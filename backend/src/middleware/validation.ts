@@ -58,7 +58,7 @@ export const acceptanceCriterionSchema = Joi.object({
   given: Joi.string().required().min(1),
   when: Joi.string().required().min(1),
   then: Joi.string().required().min(1),
-  status: Joi.string().required(),
+  status: Joi.string().default('Drafted'),
   valid: Joi.boolean().default(true),
   risk: Joi.string().valid('Low', 'Medium', 'High').required(),
   comments: Joi.string().allow('').default(''),
