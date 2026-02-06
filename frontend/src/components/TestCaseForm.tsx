@@ -1,4 +1,4 @@
-import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
+import { useAppContext } from '../context/AppContext';
 import ModernForm from './ModernForm';
 
 interface TestCaseFormProps {
@@ -9,7 +9,8 @@ interface TestCaseFormProps {
 }
 
 const TestCaseForm = ({ onSubmit, initialData, acceptanceCriterionId, onCancel }: TestCaseFormProps) => {
-    const { acceptanceCriteria } = useAcceptanceCriteria();
+    const { state } = useAppContext();
+    const { acceptanceCriteria } = state;
 
     const fields = [
         {

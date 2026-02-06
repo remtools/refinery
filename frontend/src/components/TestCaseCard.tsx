@@ -1,6 +1,5 @@
-
 import { TestCase } from '../types';
-import { useAcceptanceCriteria } from '../hooks/useAcceptanceCriteria';
+import { useAppContext } from '../context/AppContext';
 
 interface TestCaseCardProps {
     testCase: TestCase;
@@ -9,7 +8,8 @@ interface TestCaseCardProps {
 }
 
 const TestCaseCard = ({ testCase, onEdit, onDelete }: TestCaseCardProps) => {
-    const { acceptanceCriteria } = useAcceptanceCriteria();
+    const { state } = useAppContext();
+    const { acceptanceCriteria } = state;
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
